@@ -22,8 +22,8 @@ let gameOptions = {
     blockHeight: 190,
     blockWidth: 170,
     blockScale: 0.3,
-    fieldOffcetY: 80,
-    fieldOffcetX: -18,
+    fieldOffcetY: 350,
+    fieldOffcetX: -100,
     swapSpeed: 200,
     fallSpeed: 100,
     destroySpeed: 200,
@@ -96,8 +96,8 @@ let player = {
 
 function drawField(){
     let tile = {
-        pos: [50,50],
-        sprite: new Sprite('assets/blue.png', [0, 0], [171, 192], 16, [0])
+        pos: [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale + gameOptions.blockHeight/2],
+        sprite: new Sprite('assets/blocks.png', [0, 0], [171, 192], 16, [1], 'horizontal', true, 0.3)
     };
     tileArray.push(tile);
     // for (let i = 0; i < gameOptions.fieldSize; i++){
@@ -126,7 +126,7 @@ function update(dt) {
 
 function updateEntities(dt) {
     // Update the player sprite animation
-    tileArray[0].sprite.update(dt);
+    // tileArray[0].sprite.update(dt);
     player.sprite.update(dt);
 
 }
