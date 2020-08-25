@@ -1,16 +1,15 @@
 
 (function() {
-    function Sprite(url, pos, size, speed, frames, dir, once, scale) {
-        this.pos = pos;
-        this.size = size;
-        this.scale = typeof scale === 'number' ? scale : 1;
-        this.scale = scale;
-        this.speed = typeof speed === 'number' ? speed : 0;
-        this.frames = frames;
+    function Sprite(attr) {
+        this.pos = attr.pos;
+        this.size = attr.size;
+        this.scale = typeof attr.scale === 'number' ? attr.scale : 1;
+        this.speed = typeof attr.speed === 'number' ? attr.speed : 0;
+        this.frames = attr.frames;
         this._index = 0;
-        this.url = url;
-        this.dir = dir || 'horizontal';
-        this.once = once;
+        this.url = attr.url;
+        this.dir = attr.dir || 'horizontal';
+        this.once = attr.once;
     };
 
     Sprite.prototype = {
@@ -32,7 +31,7 @@
                 }
             }
             else {
-                frame = 0;
+                frame = this.frames[0];
             }
 
 

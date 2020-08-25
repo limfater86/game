@@ -36,9 +36,30 @@ let background;
 let tileArray = [];
 let gameTime = 0;
 
-// class tile {
-//
-// }
+class tile {
+    constructor(pos, frame){
+        let spriteAttr = {
+            url: 'assets/blocks.png',
+            pos: [0, 0],
+            size: [171, 192],
+            speed: 0,
+            frames: [frame],
+            scale: 0.3,
+        };
+        this.pos = pos;
+        this.sprite = new Sprite(spriteAttr)
+
+    }
+
+    action(){
+
+    }
+
+}
+
+class superTile extends tile {
+
+}
 
 function main() {
     let now = Date.now();
@@ -69,8 +90,6 @@ function init() {
     main();
 }
 
-
-
 resources.load([
     'assets/Background.png',
     'assets/field.png',
@@ -84,22 +103,26 @@ resources.load([
     'assets/pause.png',
     'assets/button_plus.png',
     'assets/blocks.png',
-    'assets/blue.png',
-    'assets/sprites.png'
 ]);
 resources.onReady(init);
 
-let player = {
-    pos: [0, 0],
-    sprite: new Sprite('assets/sprites.png', [0, 0], [39, 39], 16, [0, 1])
-};
-
 function drawField(){
-    let tile = {
-        pos: [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale + gameOptions.blockHeight/2],
-        sprite: new Sprite('assets/blocks.png', [0, 0], [171, 192], 16, [1], 'horizontal', true, 0.3)
-    };
-    tileArray.push(tile);
+    // let spriteAttr = {};
+    // spriteAttr = {
+    //     url: 'assets/blocks.png',
+    //     pos: [0, 0],
+    //     size: [171, 192],
+    //     speed: 0,
+    //     frames: [0],
+    //     scale: 0.3,
+    // };
+    // let tile = {
+    //     pos: [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale + gameOptions.blockHeight/2],
+    //     sprite: new Sprite(spriteAttr)
+    // };
+    let position = [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale + gameOptions.blockHeight/2];
+    let block = new tile(position, Math.floor(Math.random() * Math.floor(gameOptions.blockColors-1)));
+    tileArray.push(block);
     // for (let i = 0; i < gameOptions.fieldSize; i++){
     //     tileArray[i] = [];
     //     for (let j = 0; j < gameOptions.fieldSize; j++){
@@ -125,22 +148,12 @@ function update(dt) {
 }
 
 function updateEntities(dt) {
-    // Update the player sprite animation
-    // tileArray[0].sprite.update(dt);
-    player.sprite.update(dt);
+
 
 }
 
 function render() {
-    // ctx.fillStyle = terrainPattern;
-    // ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Render the player if the game isn't over
-    // if(!isGameOver) {
-         renderEntity(player);
         renderEntity(tileArray[0]);
-    // }
-
     // renderEntities(tileArray);
 
 }
@@ -161,12 +174,6 @@ function renderEntity(entity) {
 function reset() {
     document.getElementById('game-over').style.display = 'none';
     document.getElementById('game-over-overlay').style.display = 'none';
-    // isGameOver = false;
     gameTime = 0;
-    // score = 0;
-    //
-    // enemies = [];
-    // bullets = [];
 
-    player.pos = [50, canvas.height / 2];
 };
