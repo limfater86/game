@@ -22,8 +22,8 @@ let gameOptions = {
     blockHeight: 190,
     blockWidth: 170,
     blockScale: 0.3,
-    fieldOffcetY: 350,
-    fieldOffcetX: -100,
+    fieldOffcetY: 52,
+    fieldOffcetX: -38,
     swapSpeed: 200,
     fallSpeed: 100,
     destroySpeed: 200,
@@ -107,22 +107,19 @@ resources.load([
 resources.onReady(init);
 
 function drawField(){
-    // let spriteAttr = {};
-    // spriteAttr = {
-    //     url: 'assets/blocks.png',
-    //     pos: [0, 0],
-    //     size: [171, 192],
-    //     speed: 0,
-    //     frames: [0],
-    //     scale: 0.3,
-    // };
-    // let tile = {
-    //     pos: [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale + gameOptions.blockHeight/2],
-    //     sprite: new Sprite(spriteAttr)
-    // };
-    let position = [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale + gameOptions.blockHeight/2];
-    let block = new tile(position, Math.floor(Math.random() * Math.floor(gameOptions.blockColors-1)));
-    tileArray.push(block);
+    for (let i = 0; i < gameOptions.fieldSize; i++){
+        for (let j = 0; j < gameOptions.fieldSize; j++){
+            let position = [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale*j + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale*i + gameOptions.blockHeight/2];
+            let color = Math.floor(Math.random() * Math.floor(gameOptions.blockColors-1));
+            let block = new tile(position, color);
+            tileArray.push(block);
+            // tileArray[i][j] = {
+            //     blockSprite: block
+            // }
+        }
+    }
+
+
     // for (let i = 0; i < gameOptions.fieldSize; i++){
     //     tileArray[i] = [];
     //     for (let j = 0; j < gameOptions.fieldSize; j++){
@@ -153,14 +150,17 @@ function updateEntities(dt) {
 }
 
 function render() {
-        renderEntity(tileArray[0]);
-    // renderEntities(tileArray);
+        // renderEntity(tileArray[0]);
+    renderEntities(tileArray);
 
 }
 
 function renderEntities(list) {
-    for(var i=0; i<list.length; i++) {
-        renderEntity(list[i]);
+    for (let i=0; i<list.length; i++) {
+        // for (let j=0; i<list[i].length; i++){
+            renderEntity(list[i]);
+        // }
+
     }
 }
 
