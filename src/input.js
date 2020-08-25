@@ -25,6 +25,24 @@
         pressedKeys[key] = status;
     }
 
+    function blockSelect(x, y) {
+        pickedBlock = blockCheck(coordToIndex(x, y));
+    }
+    function coordToIndex(x, y) {
+        let row = Math.floor((y - gameOptions.fieldOffcetY - gameOptions.blockHeight * gameOptions.blockScale/2) / (gameOptions.blockHeight * gameOptions.blockScale));
+        let col = Math.floor((x - gameOptions.fieldOffcetX - gameOptions.blockWidth * gameOptions.blockScale/2) / (gameOptions.blockWidth * gameOptions.blockScale));
+        return {row, col}
+    }
+    function blockCheck(index){
+        if(index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize){
+            return -1;
+        }
+        return tileArray[index.row][index.col];
+    }
+
+    document.addEventListener('mouseup', function(e) {
+        blockSelect(e.offsetX, e.offsetY);
+    });
     document.addEventListener('keydown', function(e) {
         setKey(e, true);
     });
@@ -36,6 +54,7 @@
     window.addEventListener('blur', function() {
         pressedKeys = {};
     });
+    
 
     window.input = {
         isDown: function(key) {

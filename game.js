@@ -19,11 +19,11 @@ let gameOptions = {
     fieldSize: 7,
     minAreaSize: 2,
     blockColors: 5,
-    blockHeight: 190,
+    blockHeight: 192,
     blockWidth: 170,
     blockScale: 0.3,
-    fieldOffcetY: 52,
-    fieldOffcetX: -38,
+    fieldOffcetY: 117,
+    fieldOffcetX: 20,
     swapSpeed: 200,
     fallSpeed: 100,
     destroySpeed: 200,
@@ -32,19 +32,19 @@ let gameOptions = {
 };
 
 let lastTime;
-let background;
 let tileArray = [];
 let gameTime = 0;
+let pickedBlock;
 
 class tile {
     constructor(pos, frame){
         let spriteAttr = {
             url: 'assets/blocks.png',
             pos: [0, 0],
-            size: [171, 192],
+            size: [gameOptions.blockWidth, gameOptions.blockHeight],
             speed: 0,
             frames: [frame],
-            scale: 0.3,
+            scale: gameOptions.blockScale,
         };
         this.pos = pos;
         this.sprite = new Sprite(spriteAttr)
@@ -59,35 +59,6 @@ class tile {
 
 class superTile extends tile {
 
-}
-
-function main() {
-    let now = Date.now();
-    let dt = (now - lastTime) / 1000.0;
-
-    update(dt);
-    render();
-
-    lastTime = now;
-    requestAnimFrame(main);
-};
-
-function init() {
-    background = ctx.drawImage(resources.get('assets/Background.png'), 0, 0);
-    background = ctx.drawImage(resources.get( 'assets/field.png'), 20, 120, 410, 455);
-    background = ctx.drawImage(resources.get( 'assets/background_progress.png'), 30, 0, 622, 78);
-    background = ctx.drawImage(resources.get( 'assets/money.png',), 65, 15, 80, 33);
-    background = ctx.drawImage(resources.get( 'assets/money2.png',), 500, 15, 110, 33);
-    background = ctx.drawImage(resources.get( 'assets/scorepanel.png',), 500, 120, 235, 250);
-
-    document.getElementById('play-again').addEventListener('click', function() {
-        reset();
-    });
-
-    reset();
-    lastTime = Date.now();
-    drawField();
-    main();
 }
 
 resources.load([
@@ -106,37 +77,54 @@ resources.load([
 ]);
 resources.onReady(init);
 
+function drawStaticImages(){
+    ctx.drawImage(resources.get('assets/Background.png'), 0, 0);
+    ctx.drawImage(resources.get( 'assets/field.png'), 20, 120, 410, 455);
+    ctx.drawImage(resources.get( 'assets/background_progress.png'), 30, 0, 622, 78);
+    ctx.drawImage(resources.get( 'assets/money.png',), 65, 15, 80, 33);
+    ctx.drawImage(resources.get( 'assets/money2.png',), 500, 15, 110, 33);
+    ctx.drawImage(resources.get( 'assets/scorepanel.png',), 500, 120, 235, 250);
+}
+
+function main() {
+    update(timeTick());
+    render();
+    requestAnimFrame(main);
+}
+
+function timeTick() {
+    let now = Date.now();
+    let dt = (now - lastTime) / 1000.0;
+    lastTime = now;
+    return dt;
+}
+
+function init() {
+    drawStaticImages();
+    document.getElementById('play-again').addEventListener('click', function() {
+        reset();
+    });
+    reset();
+    lastTime = Date.now();
+    drawField();
+    main();
+}
+
 function drawField(){
     for (let i = 0; i < gameOptions.fieldSize; i++){
+        tileArray[i] = [];
         for (let j = 0; j < gameOptions.fieldSize; j++){
-            let position = [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale*j + gameOptions.blockWidth/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale*i + gameOptions.blockHeight/2];
-            let color = Math.floor(Math.random() * Math.floor(gameOptions.blockColors-1));
-            let block = new tile(position, color);
-            tileArray.push(block);
-            // tileArray[i][j] = {
-            //     blockSprite: block
-            // }
+            tileArray[i][j] = new tile(makePosition(i, j), randomColor());
         }
     }
+}
 
+function makePosition(i, j) {
+    return [gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale*j + gameOptions.blockWidth*gameOptions.blockScale/2, gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale*i + gameOptions.blockHeight*gameOptions.blockScale/2];
+}
 
-    // for (let i = 0; i < gameOptions.fieldSize; i++){
-    //     tileArray[i] = [];
-    //     for (let j = 0; j < gameOptions.fieldSize; j++){
-    //         let block = this.add.sprite(gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale*j + gameOptions.blockWidth/2,
-    //             gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale*i + gameOptions.blockHeight/2, 'blocks').setScale(gameOptions.blockScale);
-    //         this.blockGroup.add(block);
-    //         let randomColor = Phaser.Math.Between(0, gameOptions.blockColors-1);
-    //         block.setFrame(randomColor);
-    //         this.gameArray[i][j] = {
-    //             blockColor: randomColor,
-    //             blockSprite: block,
-    //             isEmpty: false
-    //             //isSuper: false
-    //         }
-    //
-    //     }
-    // }
+function randomColor(){
+    return Math.floor(Math.random() * Math.floor(gameOptions.blockColors-1));
 }
 
 function update(dt) {
@@ -150,16 +138,15 @@ function updateEntities(dt) {
 }
 
 function render() {
-        // renderEntity(tileArray[0]);
     renderEntities(tileArray);
 
 }
 
 function renderEntities(list) {
     for (let i=0; i<list.length; i++) {
-        // for (let j=0; i<list[i].length; i++){
-            renderEntity(list[i]);
-        // }
+        for (let j=0; j<list[i].length; j++){
+            renderEntity(list[i][j]);
+        }
 
     }
 }
@@ -176,4 +163,4 @@ function reset() {
     document.getElementById('game-over-overlay').style.display = 'none';
     gameTime = 0;
 
-};
+}
