@@ -32,12 +32,24 @@ let gameOptions = {
 };
 
 let lastTime;
-let tileArray = [];
+let cellArray = [];
+let poolArray = [];
+let renderArray = [];
+let needActionArray = [];
 let gameTime = 0;
 let pickedBlock;
 
+class cell {
+    constructor(pos, index){
+        this.isEmpty = true;
+        this.pos = pos;
+        this.index = index;
+        this.tile = {};
+    }
+
+}
 class tile {
-    constructor(pos, frame){
+    constructor(pos, frame, index, state){
         let spriteAttr = {
             url: 'assets/blocks.png',
             pos: [0, 0],
@@ -47,18 +59,38 @@ class tile {
             scale: gameOptions.blockScale,
         };
         this.pos = pos;
+        this.index = index;
+        this.state = state;
+        this.type = 'standard';
         this.sprite = new Sprite(spriteAttr)
-
     }
 
     action(){
+        // findSameColorAreas(scanBlock);
+    }
+
+    changeState(){
 
     }
 
 }
 
 class superTile extends tile {
+    constructor(pos, frame, index){
+        super(pos, frame, index);
+        this.type = 'super';
+    };
+    action(){
+        makeSuperArray(this.index.row);
+    }
+}
 
+function makeSuperArray(row){
+    let arr = [];
+    for (let i = 0; i < gameOptions.fieldSize; i++){
+        arr.push({row: row, col: i});
+    }
+    return arr;
 }
 
 resources.load([
@@ -107,16 +139,44 @@ function init() {
     reset();
     lastTime = Date.now();
     drawField();
+    startingFillCells();
     main();
 }
 
 function drawField(){
     for (let i = 0; i < gameOptions.fieldSize; i++){
-        tileArray[i] = [];
+        cellArray[i] = [];
         for (let j = 0; j < gameOptions.fieldSize; j++){
-            tileArray[i][j] = new tile(makePosition(i, j), randomColor());
+            cellArray[i][j] = new cell(makePosition(i, j), {row: i, col: j});
         }
     }
+}
+
+function startingFillCells() {
+    for (let i = 0; i < cellArray.length; i++){
+        for (let j = 0; j < cellArray[i].length; j++){
+            fillCell(cellArray[i][j].pos, i, j);
+        }
+    }
+}
+
+function fillCells(array) {
+    array.forEach((item) => {
+        fillCell(makePosition(item.row, item.col), item.row, item.col)
+    })
+}
+
+function fillCell(pos, i, j) {
+    cellArray[i][j].tile = createStandardTile(pos, i, j);
+    cellArray[i][j].isEmpty = false;
+}
+
+function createStandardTile(pos, i,j, state){
+    return new tile(pos, randomColor(), {row: i, col: j}, (state || 'base'));
+}
+
+function createSuperTile(pos, i,j, state) {
+    return new tile(pos, randomColor(), {row: i, col: j}, (state ||'base'));
 }
 
 function makePosition(i, j) {
@@ -128,6 +188,10 @@ function randomColor(){
 }
 
 function update(dt) {
+    if (pickedBlock){
+        cellArray[pickedBlock.row][pickedBlock.col].tile.action();
+        pickedBlock = 0;
+    }
     gameTime += dt;
     updateEntities(dt);
 }
@@ -138,7 +202,7 @@ function updateEntities(dt) {
 }
 
 function render() {
-    renderEntities(tileArray);
+    renderEntities(cellArray);
 
 }
 
@@ -154,7 +218,7 @@ function renderEntities(list) {
 function renderEntity(entity) {
     ctx.save();
     ctx.translate(entity.pos[0], entity.pos[1]);
-    entity.sprite.render(ctx);
+    entity.tile.sprite.render(ctx);
     ctx.restore();
 }
 
@@ -163,4 +227,25 @@ function reset() {
     document.getElementById('game-over-overlay').style.display = 'none';
     gameTime = 0;
 
+}
+
+function blockSelect(x, y) {
+    let check = blockCheck(coordToIndex(x, y));
+    if (check === -1) {
+        pickedBlock = 0;
+    } else {
+        pickedBlock = check;
+    }
+
+}
+function coordToIndex(x, y) {
+    let row = Math.floor((y - gameOptions.fieldOffcetY - gameOptions.blockHeight * gameOptions.blockScale/2) / (gameOptions.blockHeight * gameOptions.blockScale));
+    let col = Math.floor((x - gameOptions.fieldOffcetX - gameOptions.blockWidth * gameOptions.blockScale/2) / (gameOptions.blockWidth * gameOptions.blockScale));
+    return {row, col}
+}
+function blockCheck(index){
+    if(index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize){
+        return -1;
+    }
+    return {row: index.row, col: index.col};
 }

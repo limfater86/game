@@ -35,8 +35,8 @@
             }
 
 
-            var x = this.pos[0];
-            var y = this.pos[1];
+            let x = this.pos[0];
+            let y = this.pos[1];
 
             if(this.dir == 'vertical') {
                 y += frame * this.size[1];
