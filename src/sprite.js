@@ -31,7 +31,7 @@
                 }
             }
             else {
-                frame = this.frames[0];
+                frame = this.frames;
             }
 
 

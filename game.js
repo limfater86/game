@@ -52,10 +52,10 @@ class tile {
     constructor(pos, frame, index, state){
         let spriteAttr = {
             url: 'assets/blocks.png',
-            pos: [0, 0],
+            pos: [0,0],
             size: [gameOptions.blockWidth, gameOptions.blockHeight],
             speed: 0,
-            frames: [frame],
+            frames: frame,
             scale: gameOptions.blockScale,
         };
         this.pos = pos;
@@ -66,7 +66,8 @@ class tile {
     }
 
     action(){
-        // findSameColorAreas(scanBlock);
+        poolArray = sameColorAreasFinder.scan(this.index);
+        console.log(poolArray);
     }
 
     changeState(){
@@ -74,6 +75,50 @@ class tile {
     }
 
 }
+let sameColorAreasFinder = {
+    // matchedBlocks: [],
+    // scannedBlocks: [], //массив проверенных блоков
+    // currentScan: [], //последовательность проверки блоков
+    scan: function(scanBlock){
+        this.matchedBlocks = [];
+        this.scannedBlocks = []; //массив проверенных блоков
+        this.currentScan = []; //последовательность проверки блоков
+        this.currentScan.push(scanBlock);
+        this.matchedBlocks.push(scanBlock);
+        this.scannedBlocks.push(scanBlock);
+            while (this.currentScan.length){
+                this.blockScan(this.currentScan[0]);
+            }
+            return this.matchedBlocks;
+    },
+    blockScan:function(scanBlock){
+        let nearbyBlock = {};
+        for (let i = -1; i < 2; i++){
+            if (i == 0){
+                for (let j = -1; j < 2; j+=2){
+                    nearbyBlock = {row: scanBlock.row, col: scanBlock.col + j};
+                    this.nearbyBlockCheck(nearbyBlock, scanBlock);
+                }
+            } else {
+                nearbyBlock = {row: scanBlock.row + i, col: scanBlock.col};
+                this.nearbyBlockCheck(nearbyBlock, scanBlock);
+            }
+        }
+        this.currentScan.shift();
+    },
+    nearbyBlockCheck: function (nearBlock, scanBlock){
+        let include = this.scannedBlocks.findIndex((item)=> (item.row == nearBlock.row) && (item.col == nearBlock.col));
+            if (include === -1){
+                if (nearBlock.row >= 0 && nearBlock.row < gameOptions.fieldSize && nearBlock.col >= 0 && nearBlock.col < gameOptions.fieldSize) {
+                    if (cellArray[nearBlock.row][nearBlock.col].tile.sprite.frames === cellArray[scanBlock.row][scanBlock.col].tile.sprite.frames){
+                        this.matchedBlocks.push(nearBlock);
+                        this.currentScan.push(nearBlock);
+                    }
+                    this.scannedBlocks.push(nearBlock);
+                }
+            }
+    }
+};
 
 class superTile extends tile {
     constructor(pos, frame, index){
@@ -149,7 +194,9 @@ function drawField(){
         for (let j = 0; j < gameOptions.fieldSize; j++){
             cellArray[i][j] = new cell(makePosition(i, j), {row: i, col: j});
         }
+        renderArray[i] = cellArray[i];
     }
+
 }
 
 function startingFillCells() {
@@ -202,8 +249,10 @@ function updateEntities(dt) {
 }
 
 function render() {
-    renderEntities(cellArray);
-
+    if (renderArray.length != 0){
+        renderEntities(renderArray);
+        renderArray = [];
+    }
 }
 
 function renderEntities(list) {
@@ -214,6 +263,10 @@ function renderEntities(list) {
 
     }
 }
+
+// function renderStaticEntity(entity) {
+//     entity.tile.sprite.render(ctx);
+// }
 
 function renderEntity(entity) {
     ctx.save();
