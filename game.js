@@ -37,7 +37,7 @@ let poolArray = [];
 let renderArray = [];
 let needActionArray = [];
 let gameTime = 0;
-let pickedBlock;
+let pickedCell;
 
 class cell {
     constructor(pos, index){
@@ -45,6 +45,9 @@ class cell {
         this.pos = pos;
         this.index = index;
         this.tile = {};
+    }
+    action(){
+        this.tile.action();
     }
 
 }
@@ -66,8 +69,7 @@ class tile {
     }
 
     action(){
-        poolArray = sameColorAreasFinder.scan(this.index);
-        console.log(poolArray);
+        if (findMatch(this.index)) { markDestroyTiles()};
     }
 
     changeState(){
@@ -75,6 +77,20 @@ class tile {
     }
 
 }
+
+function markDestroyTiles() {
+    poolArray.forEach((item) => {
+        cellArray[item.row][item.col].state = 'needDestroy';
+    });
+    renderArray.push(poolArray);
+}
+
+function findMatch(index){
+    poolArray = [];
+    poolArray = sameColorAreasFinder.scan(index);
+    return poolArray.length > 1;
+}
+
 let sameColorAreasFinder = {
     // matchedBlocks: [],
     // scannedBlocks: [], //массив проверенных блоков
@@ -154,6 +170,18 @@ resources.load([
 ]);
 resources.onReady(init);
 
+function init() {
+    drawStaticImages();
+    document.getElementById('play-again').addEventListener('click', function() {
+        reset();
+    });
+    reset();
+    lastTime = Date.now();
+    drawField();
+    startingFillCells();
+    main();
+}
+
 function drawStaticImages(){
     ctx.drawImage(resources.get('assets/Background.png'), 0, 0);
     ctx.drawImage(resources.get( 'assets/field.png'), 20, 120, 410, 455);
@@ -176,33 +204,22 @@ function timeTick() {
     return dt;
 }
 
-function init() {
-    drawStaticImages();
-    document.getElementById('play-again').addEventListener('click', function() {
-        reset();
-    });
-    reset();
-    lastTime = Date.now();
-    drawField();
-    startingFillCells();
-    main();
-}
-
 function drawField(){
     for (let i = 0; i < gameOptions.fieldSize; i++){
         cellArray[i] = [];
         for (let j = 0; j < gameOptions.fieldSize; j++){
             cellArray[i][j] = new cell(makePosition(i, j), {row: i, col: j});
         }
-        renderArray[i] = cellArray[i];
     }
 
 }
 
 function startingFillCells() {
     for (let i = 0; i < cellArray.length; i++){
+        renderArray[i]= [];
         for (let j = 0; j < cellArray[i].length; j++){
             fillCell(cellArray[i][j].pos, i, j);
+            renderArray[i][j] = {row: i, col: j};
         }
     }
 }
@@ -235,12 +252,20 @@ function randomColor(){
 }
 
 function update(dt) {
-    if (pickedBlock){
-        cellArray[pickedBlock.row][pickedBlock.col].tile.action();
-        pickedBlock = 0;
-    }
-    gameTime += dt;
+    doPickedCellActions();
+    updateGameTime(dt);
     updateEntities(dt);
+}
+
+function doPickedCellActions() {
+    if (pickedCell){
+        cellArray[pickedCell.row][pickedCell.col].action();
+        pickedCell = 0;
+    }
+}
+
+function updateGameTime(dt){
+    gameTime += dt;
 }
 
 function updateEntities(dt) {
@@ -249,19 +274,31 @@ function updateEntities(dt) {
 }
 
 function render() {
-    if (renderArray.length != 0){
+    if (renderArray.length > 0){
         renderEntities(renderArray);
-        renderArray = [];
     }
 }
 
 function renderEntities(list) {
-    for (let i=0; i<list.length; i++) {
-        for (let j=0; j<list[i].length; j++){
-            renderEntity(list[i][j]);
-        }
+    for (let i = 0; i< list.length; i++){
+        let index = list[i][0];
+        if (checkTileState(index) === 'base'){
+            for (let j=0; j<list[i].length; j++){
+                let row = list[i][j].row;
+                let col = list[i][j].col;
+                renderEntity(cellArray[row][col]);
+            }
+        } else if (checkTileState(index) === 'needDestroy'){
 
-    }
+        } else if (checkTileState(index) === 'needMove'){
+
+        }
+    };
+
+}
+
+function checkTileState(index){
+    return cellArray[index.row][index.col].tile.state;
 }
 
 // function renderStaticEntity(entity) {
@@ -285,9 +322,9 @@ function reset() {
 function blockSelect(x, y) {
     let check = blockCheck(coordToIndex(x, y));
     if (check === -1) {
-        pickedBlock = 0;
+        pickedCell = 0;
     } else {
-        pickedBlock = check;
+        pickedCell = check;
     }
 
 }
