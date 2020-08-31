@@ -10,11 +10,20 @@
         this.url = attr.url;
         this.dir = attr.dir || 'horizontal';
         this.once = attr.once;
+        this._alpha = attr.alpha;
     };
 
     Sprite.prototype = {
         update: function(dt) {
             this._index += this.speed*dt;
+        },
+
+        get alpha() {
+            return this._alpha;
+        },
+
+        set alpha(value) {
+            this._alpha = value;
         },
 
         render: function(ctx) {
@@ -37,17 +46,18 @@
 
             let x = this.pos[0];
             let y = this.pos[1];
+            let frameX=0, frameY=0;
 
             if(this.dir == 'vertical') {
-                y += frame * this.size[1];
+                frameY += frame * this.size[1];
             }
             else {
-                x += frame * this.size[0];
+                frameX += frame * this.size[0];
             }
             ctx.drawImage(resources.get(this.url),
-                          x, y,
+                          frameX, frameY,
                           this.size[0], this.size[1],
-                          0, 0,
+                          x, y,
                           this.size[0]*this.scale, this.size[1]*this.scale);
         }
     };
