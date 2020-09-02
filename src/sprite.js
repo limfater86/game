@@ -1,7 +1,8 @@
 
 (function() {
     function Sprite(attr) {
-        this.pos = attr.pos;
+        this.pos = {x: attr.pos.x, y: attr.pos.y};
+        // this.pos = attr.pos;
         this.size = attr.size;
         this.scale = typeof attr.scale === 'number' ? attr.scale : 1;
         this.speed = typeof attr.speed === 'number' ? attr.speed : 0;
@@ -11,7 +12,7 @@
         this.dir = attr.dir || 'horizontal';
         this.once = attr.once;
         this._alpha = attr.alpha;
-    };
+    }
 
     Sprite.prototype = {
         update: function(dt) {
@@ -25,6 +26,22 @@
         set alpha(value) {
             this._alpha = value;
         },
+
+        // get pos(){
+        //     return {x: this._pos.x, y:this._pos.y};
+        // },
+        //
+        // set pos(value){
+        //     this._pos.x = value.x;
+        //     this._pos.y = value.y;
+        // },
+
+        // set _pos.x(){
+        //
+        // },
+        // set _pos.y(){
+        //
+        // },
 
         render: function(ctx) {
             var frame;
@@ -44,8 +61,10 @@
             }
 
 
-            let x = this.pos[0];
-            let y = this.pos[1];
+            let x = this.pos.x;
+            let y = this.pos.y;
+            // let x = this.pos[0];
+            // let y = this.pos[1];
             let frameX=0, frameY=0;
 
             if(this.dir == 'vertical') {
