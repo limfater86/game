@@ -315,11 +315,11 @@ function makeTilesFall() {
         }
     }
     renderFallArray.forEach(itemFall => {
-        let index = renderArray.findIndex(itemCurrent => (itemFall.row == itemCurrent.row)&&(itemFall.Col == itemCurrent.col));
+        let index = renderArray.findIndex(itemCurrent => (itemFall.row == itemCurrent.row)&&(itemFall.col == itemCurrent.col));
         if (index !== -1) renderArray.splice(index, 1);
     });
     poolArray.forEach(itemPool => {
-        let index = renderArray.findIndex(itemCurrent => (itemPool.row == itemCurrent.row)&&(itemPool.Col == itemCurrent.col));
+        let index = renderArray.findIndex(itemCurrent => (itemPool.row == itemCurrent.row)&&(itemPool.col == itemCurrent.col));
         if (index !== -1) renderArray.splice(index, 1);
     });
 }
