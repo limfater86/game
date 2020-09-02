@@ -27,7 +27,7 @@ let gameOptions = {
     fieldOffcetY: 117,
     fieldOffcetX: 20,
     swapSpeed: 200,
-    fallSpeed: 120,
+    fallSpeed: 200,
     destroySpeed: 3,
     shuffleNum: 3,
     roundTime: 30
@@ -289,8 +289,42 @@ function update(dt) {
         renderStatus = 'fall';
         makeTilesFall();
     }
+    if (renderStatus === 'fallComplete'){
+        refillField();
+        refillRenderArray();
+        renderStatus = 'base';
+    }
     // updateGameTime(dt);
     // updateEntities(dt);
+}
+
+function refillField(){ //функция заполняет пустые ячейки, привязывает невидимые спрайты пустым ячейкам
+    for (let j = 0; j < gameOptions.fieldSize; j++){
+        let emptyBlocks = holesInCol(j);
+        if(emptyBlocks > 0){
+            for (let i = 0; i < emptyBlocks; i++){
+                cellArray[i][j].tile.sprite.frames = randomColor();
+                cellArray[i][j].isEmpty = false;
+                // this.gameArray[i][j].blockSprite.x = gameOptions.fieldOffcetX + gameOptions.blockWidth * gameOptions.blockScale * j + gameOptions.blockWidth / 2;
+                // this.gameArray[i][j].blockSprite.y = gameOptions.fieldOffcetY + gameOptions.blockHeight * gameOptions.blockScale / 2 - (emptyBlocks - i) * gameOptions.blockHeight * gameOptions.blockScale;
+            }
+        }
+    }
+}
+function holesInCol(col){
+    let result = 0;
+    for (let i = 0; i < gameOptions.fieldSize; i++){
+        if(cellArray[i][col].isEmpty) result++;
+    }
+    return result;
+}
+
+function refillRenderArray() {
+    for (let i = 0; i < cellArray.length; i++){
+        for (let j = 0; j < cellArray[i].length; j++){
+            renderArray.push({row: i, col: j});
+        }
+    }
 }
 
 function makeTilesFall() {
@@ -375,6 +409,8 @@ function renderDestroyTiles(dt) {
         ctx.globalAlpha = 1;
         setSpriteAlpha(alpha, renderDestroyArray);
         if (alpha <= 0) {
+            alpha = 1;
+            setSpriteAlpha(alpha, renderDestroyArray);
             renderDestroyArray = [];
             renderStatus = 'destroyComplete';
         }
@@ -394,24 +430,32 @@ function setSpriteAlpha(alpha, list) {
 
 function renderFallTiles(dt) {
     if (renderFallArray.length > 0){
-        renderFallArray.forEach(item =>{
-            // let spritePos = cellArray[item.row][item.col].tile.sprite.pos;
-            // spritePos.y = dt*gameOptions.fallSpeed;
-            // let tilePos = cellArray[item.row][item.col].tile.pos;
-            // if (spritePos.y > tilePos.y) spritePos.y = tilePos.y;
-            // cellArray[item.row][item.col].tile.sprite.pos = spritePos;
-            let dy = cellArray[item.row][item.col].tile.sprite.pos.y + dt*gameOptions.fallSpeed;
-            if (dy > cellArray[item.row][item.col].tile.pos.y) dy = cellArray[item.row][item.col].tile.pos.y;
-            cellArray[item.row][item.col].tile.sprite.pos.y = dy;
-            // let dy = cellArray[item.row][item.col].tile.sprite.pos[1] + dt*gameOptions.fallSpeed;
-            // if (dy > cellArray[item.row][item.col].tile.pos[1]) dy = cellArray[item.row][item.col].tile.pos[1];
-            // cellArray[item.row][item.col].tile.sprite.pos[1] = dy;
-            // ctx.save();
-            // ctx.translate(dx, dy);
-            renderEntity(cellArray[item.row][item.col]);
-            // ctx.restore();
-            renderStatus = 'basic';
-        });
+        if (renderStatus === 'fall') {
+            renderFallArray.forEach(item => {
+                // let spritePos = cellArray[item.row][item.col].tile.sprite.pos;
+                // spritePos.y = dt*gameOptions.fallSpeed;
+                // let tilePos = cellArray[item.row][item.col].tile.pos;
+                // if (spritePos.y > tilePos.y) spritePos.y = tilePos.y;
+                // cellArray[item.row][item.col].tile.sprite.pos = spritePos;
+                let dy = cellArray[item.row][item.col].tile.sprite.pos.y + dt * gameOptions.fallSpeed;
+                if (dy > cellArray[item.row][item.col].tile.pos.y) {
+                    dy = cellArray[item.row][item.col].tile.pos.y;
+                    renderStatus = 'fallComplete';
+                }
+                cellArray[item.row][item.col].tile.sprite.pos.y = dy;
+                // let dy = cellArray[item.row][item.col].tile.sprite.pos[1] + dt*gameOptions.fallSpeed;
+                // if (dy > cellArray[item.row][item.col].tile.pos[1]) dy = cellArray[item.row][item.col].tile.pos[1];
+                // cellArray[item.row][item.col].tile.sprite.pos[1] = dy;
+                // ctx.save();
+                // ctx.translate(dx, dy);
+                renderEntity(cellArray[item.row][item.col]);
+                // ctx.restore();
+
+            });
+        } else if (renderStatus === 'fallComplete'){
+            renderFallArray = [];
+            poolArray = [];
+        }
     }
 }
 
