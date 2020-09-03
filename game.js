@@ -73,8 +73,16 @@ class tile {
     }
 
     action(){
-        if (findMatch(this.index)) { markDestroyTiles() }
-        scoreCount();
+        if (findMatch(this.index)) {
+            markDestroyTiles(poolArray);
+            if (poolArray.length > 6) {
+                placeSuperTile(this.index);
+                renderDestroyArray.splice(this.index, 1);
+                renderArray.push(this.index);
+            }
+            scoreCount(this);
+        }
+
     }
 
     get state (){
@@ -88,17 +96,23 @@ class tile {
 }
 
 class superTile extends tile {
-    constructor(pos, frame, index){
-        super(pos, frame, index);
+    constructor(pos, frame, index, state){
+        super(pos, frame, index, state);
         this.type = 'super';
     };
     action(){
-        makeSuperArray(this.index.row);
+        markDestroyTiles(makeSuperArray(this.index));
+        scoreCount(this);
+        // cellArray[this.index.row][this.index.col].type = 'standard';
     }
 }
 
-function markDestroyTiles() {
-    poolArray.forEach((item) => {
+function placeSuperTile(index) {
+    fillCell(makePosition(index.row, index.col), index.row, index.col, 'super');
+}
+
+function markDestroyTiles(arr) {
+    arr.forEach((item) => {
         renderDestroyArray.push(item);
         deleteFromRenderArray(item);
         cellArray[item.row][item.col].isEmpty = true;
@@ -114,10 +128,10 @@ function findMatch(index){
 
 let finder = new SameColorAreasFinder();
 
-function makeSuperArray(row){
+function makeSuperArray(index){
     let arr = [];
     for (let i = 0; i < gameOptions.fieldSize; i++){
-        arr.push({row: row, col: i});
+        arr.push({row: index.row, col: i});
     }
     return arr;
 }
@@ -198,8 +212,9 @@ function fillCells(array) {
     })
 }
 
-function fillCell(pos, i, j) {
-    cellArray[i][j].tile = createStandardTile(pos, i, j);
+function fillCell(pos, i, j, type = 'standard') {
+    if (type === 'standard') cellArray[i][j].tile = createStandardTile(pos, i, j);
+    else cellArray[i][j].tile = createSuperTile(pos, i, j);
     cellArray[i][j].isEmpty = false;
 }
 
@@ -208,7 +223,7 @@ function createStandardTile(pos, i,j, state){
 }
 
 function createSuperTile(pos, i,j, state) {
-    return new tile(pos, randomColor(), {row: i, col: j}, (state ||'base'));
+    return new superTile(pos, gameOptions.blockColors, {row: i, col: j}, (state ||'base'));
 }
 
 function makePosition(i, j) {
@@ -238,8 +253,9 @@ function refillField(){
         let emptyBlocks = holesInCol(j);
         if(emptyBlocks > 0){
             for (let i = 0; i < emptyBlocks; i++){
-                cellArray[i][j].tile.sprite.frames = randomColor();
-                cellArray[i][j].isEmpty = false;
+                fillCell(cellArray[i][j].pos, i, j);
+                // cellArray[i][j].tile.sprite.frames = randomColor();
+                // cellArray[i][j].isEmpty = false;
                 // this.gameArray[i][j].blockSprite.x = gameOptions.fieldOffcetX + gameOptions.blockWidth * gameOptions.blockScale * j + gameOptions.blockWidth / 2;
                 // this.gameArray[i][j].blockSprite.y = gameOptions.fieldOffcetY + gameOptions.blockHeight * gameOptions.blockScale / 2 - (emptyBlocks - i) * gameOptions.blockHeight * gameOptions.blockScale;
             }
@@ -276,9 +292,12 @@ function makeTilesFall() {
                     deleteFromRenderArray(item);
                     cellArray[i][j].isEmpty = true;
                     cellArray[i+holes][j].isEmpty = false;
-                    cellArray[i+holes][j].tile.sprite.frames = cellArray[i][j].tile.sprite.frames;
-                    cellArray[i+holes][j].tile.sprite.pos.y = cellArray[i][j].tile.sprite.pos.y;
-                    cellArray[i+holes][j].tile.type = cellArray[i][j].tile.type;
+                    cellArray[i+holes][j].tile = cellArray[i][j].tile;
+                    cellArray[i+holes][j].tile.pos.y = cellArray[i+holes][j].pos.y;
+                    cellArray[i+holes][j].tile.index.row = cellArray[i+holes][j].index.row;
+                    // cellArray[i+holes][j].tile.sprite.frames = cellArray[i][j].tile.sprite.frames;
+                    // cellArray[i+holes][j].tile.sprite.pos.y = cellArray[i][j].tile.sprite.pos.y;
+                    // cellArray[i+holes][j].tile.type = cellArray[i][j].tile.type;
                     // cellArray[i+holes][j].tile.pos = cellArray[i+holes][j].pos;
                     // cellArray[i+holes][j].tile.index.row = cellArray[i+holes][j].index.row;
                     // cellArray[i+holes][j].tile.index.col = cellArray[i+holes][j].index.col;
@@ -345,7 +364,7 @@ function blockCheck(index){
     return {row: index.row, col: index.col};
 }
 
-function scoreCount(){
+function scoreCount(tile){
     let tiles = poolArray.length;
     let scoreAdd = 0;
     switch (tiles){
@@ -369,6 +388,7 @@ function scoreCount(){
             break;
     }
     score += scoreAdd;
+    if (tile.type === 'super') score += 20;
     // if(pickedBlock.isSuper) this.score += 20;
     // this.scoreText.setText(this.score);
     // if (this.score.toString().length == 2) this.scoreText.x = 590;
