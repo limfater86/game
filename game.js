@@ -1,5 +1,3 @@
-'use strict';
-
 var requestAnimFrame = (function(){
     return window.requestAnimationFrame       ||
         window.webkitRequestAnimationFrame ||
@@ -34,11 +32,11 @@ let gameOptions = {
 };
 
 let lastTime;
+let score = 0;
 let cellArray = [];
 let poolArray = [];
 let renderStatus = 'base';
 let renderArray = [];
-let renderBaseArray = [];
 let renderDestroyArray = [];
 let renderFallArray = [];
 let gameTime = 0;
@@ -55,21 +53,11 @@ class cell {
         this.tile.action();
     }
 
-    // get pos(){
-    //     return {x: this._pos.x, y:this._pos.y};
-    // }
-    //
-    // set pos(value){
-    //     this._pos.x = value.x;
-    //     this._pos.y = value.y;
-    // }
-
 }
 class tile {
     constructor(pos, frame, index, state){
         let spriteAttr = {
             url: 'assets/blocks.png',
-            // pos: pos,
             pos: {x: pos.x, y: pos.y},
             size: [gameOptions.blockWidth, gameOptions.blockHeight],
             speed: 0,
@@ -78,7 +66,6 @@ class tile {
             alpha: 1
         };
         this.pos = {x: pos.x, y: pos.y};
-        // this.pos = pos;
         this.index = {row: index.row, col: index.col};
         this._state = state;
         this.type = 'standard';
@@ -87,6 +74,7 @@ class tile {
 
     action(){
         if (findMatch(this.index)) { markDestroyTiles() }
+        scoreCount();
     }
 
     get state (){
@@ -96,15 +84,6 @@ class tile {
     set state(value){
         this._state = value;
     }
-
-    // get pos(){
-    //     return {x: this._pos.x, y:this._pos.y};
-    // }
-    //
-    // set pos(value){
-    //     this._pos.x = value.x;
-    //     this._pos.y = value.y;
-    // }
 
 }
 
@@ -120,62 +99,20 @@ class superTile extends tile {
 
 function markDestroyTiles() {
     poolArray.forEach((item) => {
-        // cellArray[item.row][item.col].tile.state = 'needDestroy';
         renderDestroyArray.push(item);
         deleteFromRenderArray(item);
         cellArray[item.row][item.col].isEmpty = true;
     });
     renderStatus = 'destroy';
-    // console.log(renderDestroyArray);
 }
 
 function findMatch(index){
     poolArray = [];
-    poolArray = sameColorAreasFinder.scan(index);
+    poolArray = finder.scan(index);
     return poolArray.length > 1;
 }
 
-let sameColorAreasFinder = {
-    scan: function(scanBlock){
-        this.matchedBlocks = [];
-        this.scannedBlocks = []; //массив проверенных блоков
-        this.currentScan = []; //последовательность проверки блоков
-        this.currentScan.push(scanBlock);
-        this.matchedBlocks.push(scanBlock);
-        this.scannedBlocks.push(scanBlock);
-            while (this.currentScan.length){
-                this.blockScan(this.currentScan[0]);
-            }
-            return this.matchedBlocks;
-    },
-    blockScan:function(scanBlock){
-        let nearbyBlock = {};
-        for (let i = -1; i < 2; i++){
-            if (i == 0){
-                for (let j = -1; j < 2; j+=2){
-                    nearbyBlock = {row: scanBlock.row, col: scanBlock.col + j};
-                    this.nearbyBlockCheck(nearbyBlock, scanBlock);
-                }
-            } else {
-                nearbyBlock = {row: scanBlock.row + i, col: scanBlock.col};
-                this.nearbyBlockCheck(nearbyBlock, scanBlock);
-            }
-        }
-        this.currentScan.shift();
-    },
-    nearbyBlockCheck: function (nearBlock, scanBlock){
-        let include = this.scannedBlocks.findIndex((item)=> (item.row == nearBlock.row) && (item.col == nearBlock.col));
-            if (include === -1){
-                if (nearBlock.row >= 0 && nearBlock.row < gameOptions.fieldSize && nearBlock.col >= 0 && nearBlock.col < gameOptions.fieldSize) {
-                    if (cellArray[nearBlock.row][nearBlock.col].tile.sprite.frames === cellArray[scanBlock.row][scanBlock.col].tile.sprite.frames){
-                        this.matchedBlocks.push(nearBlock);
-                        this.currentScan.push(nearBlock);
-                    }
-                    this.scannedBlocks.push(nearBlock);
-                }
-            }
-    }
-};
+let finder = new SameColorAreasFinder();
 
 function makeSuperArray(row){
     let arr = [];
@@ -327,7 +264,6 @@ function refillRenderArray() {
 }
 
 function makeTilesFall() {
-    poolArray = [];
     for (let i = gameOptions.fieldSize - 2; i >= 0; i--){
         for (let j = 0; j < gameOptions.fieldSize; j++){
             if (!cellArray[i][j].isEmpty){
@@ -381,173 +317,11 @@ function updateEntities(dt) {
 
 }
 
-function render(dt) {
-    renderInterface();
-    renderDestroyTiles(dt);
-    renderFallTiles(dt);
-    renderStaticTiles();
-}
-
-function renderInterface() {
-    drawStaticImages();
-    // score
-    // progressbar
-    // time
-    // bonus
-    //buttons
-}
-
-function renderDestroyTiles(dt) {
-    if (renderStatus === 'destroy'){
-        let alpha = getSpriteAlpha(renderDestroyArray[0]);
-        alpha -= dt * gameOptions.destroySpeed;
-        alpha > 0 ? ctx.globalAlpha = alpha : ctx.globalAlpha = 0;
-        renderEntities(renderDestroyArray);
-        ctx.globalAlpha = 1;
-        setSpriteAlpha(alpha, renderDestroyArray);
-        if (alpha <= 0) {
-            alpha = 1;
-            setSpriteAlpha(alpha, renderDestroyArray);
-            renderDestroyArray = [];
-            renderStatus = 'destroyComplete';
-        }
-    }
-
-}
-
-function getSpriteAlpha(index) {
-    return cellArray[index.row][index.col].tile.sprite.alpha;
-}
-
-function setSpriteAlpha(alpha, list) {
-    list.forEach(item => {
-        cellArray[item.row][item.col].tile.sprite.alpha = alpha;
-    })
-}
-
-function renderFallTiles(dt) {
-    // if (renderFallArray.length > 0){
-        if (renderStatus === 'fall') {
-            let onPos = 0;
-            renderFallArray.forEach(item => {
-                // let spritePos = cellArray[item.row][item.col].tile.sprite.pos;
-                // spritePos.y = dt*gameOptions.fallSpeed;
-                // let tilePos = cellArray[item.row][item.col].tile.pos;
-                // if (spritePos.y > tilePos.y) spritePos.y = tilePos.y;
-                // cellArray[item.row][item.col].tile.sprite.pos = spritePos;
-                let dy = cellArray[item.row][item.col].tile.sprite.pos.y + dt * gameOptions.fallSpeed;
-                if (dy > cellArray[item.row][item.col].tile.pos.y) {
-                    dy = cellArray[item.row][item.col].tile.pos.y;
-                    onPos++;
-                }
-                cellArray[item.row][item.col].tile.sprite.pos.y = dy;
-
-                // let dy = cellArray[item.row][item.col].tile.sprite.pos[1] + dt*gameOptions.fallSpeed;
-                // if (dy > cellArray[item.row][item.col].tile.pos[1]) dy = cellArray[item.row][item.col].tile.pos[1];
-                // cellArray[item.row][item.col].tile.sprite.pos[1] = dy;
-                // ctx.save();
-                // ctx.translate(dx, dy);
-                renderEntity(cellArray[item.row][item.col]);
-                // ctx.restore();
-
-            });
-            if (onPos === renderFallArray.length){
-                renderStatus = 'fallComplete';
-                renderFallArray = [];
-            }
-         }
-    // }
-}
-
-function renderStaticTiles() {
-    // let current = renderArray.slice();
-    // if(renderDestroyArray.length >0){
-    //     renderDestroyArray.forEach((item) => {
-    //         deleteFromRenderArray(item);
-    //         // let index = renderArray.findIndex((itemCurrent) => (itemDestroy.row == itemCurrent.row) && (itemDestroy.col == itemCurrent.col));
-    //         // if (index !== -1) renderArray.splice(index, 1);
-    //     })
-    // }
-    // console.log(current);
-    renderEntities(renderArray);
-}
-
-// function renderBase() {
-//     if (renderBaseArray.length > 0){
-//         renderBaseEntities(renderBaseArray);
-//         renderBaseArray = [];
-//     }
-// }
-//
-// function renderBaseEntities(list) {
-//     for (let i = 0; i< list.length; i++){
-//         let row = list[i].row;
-//         let col = list[i].col;
-//         renderBaseEntity(cellArray[row][col]);
-//     }
-// }
-//
-// function renderBaseEntity(entity) {
-//     entity.tile.sprite.render(ctx);
-// }
-//
-// function renderDestroy() {
-//     if (renderDestroyArray.length > 0){
-//         renderDestroyEntities(renderDestroyArray);
-//         renderDestroyArray = [];
-//         console.log('renderDestroy complete')
-//     }
-// }
-// function renderDestroyEntities(list) {
-//     for (let i = 0; i< list.length; i++){
-//         let row = list[i].row;
-//         let col = list[i].col;
-//         renderDestroyEntity(cellArray[row][col]);
-//     }
-// }
-// function renderDestroyEntity(entity) {
-//     console.log('renderDestroy');
-//     ctx.save();
-//     ctx.translate(-300, 0);
-//     entity.tile.sprite.render(ctx);
-//     ctx.restore();
-//     ctx.globalAlpha = 0.5;
-//     entity.tile.sprite.render(ctx);
-// }
-// function renderMove() {
-//     if (renderMoveArray.length > 0){
-//         renderEntities(renderMoveArray);
-//     }
-// }
-//
-function renderEntities(list) {
-    for (let i = 0; i< list.length; i++){
-        let row = list[i].row;
-        let col = list[i].col;
-        renderEntity(cellArray[row][col]);
-    }
-}
-
-// function checkTileState(index){
-//     return cellArray[index.row][index.col].tile.state;
-// }
-
-function renderEntity(entity) {
-    entity.tile.sprite.render(ctx);
-}
-
-// function renderEntity(entity) {
-//     ctx.save();
-//     ctx.translate(entity.pos[0], entity.pos[1]);
-//     entity.tile.sprite.render(ctx);
-//     ctx.restore();
-// }
-
 function reset() {
     document.getElementById('game-over').style.display = 'none';
     document.getElementById('game-over-overlay').style.display = 'none';
     gameTime = 0;
-
+    score = 0;
 }
 
 function blockSelect(x, y) {
@@ -569,4 +343,41 @@ function blockCheck(index){
         return -1;
     }
     return {row: index.row, col: index.col};
+}
+
+function scoreCount(){
+    let tiles = poolArray.length;
+    let scoreAdd = 0;
+    switch (tiles){
+        case 2:
+            scoreAdd = tiles * 10;
+            break;
+        case 3:
+            scoreAdd = tiles * 10 + 10;
+            break;
+        case 4:
+            scoreAdd = tiles * 10 + 20;
+            break;
+        case 5:
+            scoreAdd = tiles * 10 + 30;
+            break;
+        case 6:
+            scoreAdd = tiles * 10 + 40;
+            break;
+        default:
+            scoreAdd = tiles * 10 + 50;
+            break;
+    }
+    score += scoreAdd;
+    // if(pickedBlock.isSuper) this.score += 20;
+    // this.scoreText.setText(this.score);
+    // if (this.score.toString().length == 2) this.scoreText.x = 590;
+    // else if (this.score.toString().length == 3) this.scoreText.x = 582;
+    // else if (this.score.toString().length == 4) this.scoreText.x = 572;
+    // else this.scoreText.x = 602;
+    // this.progressBarMask.x += this.progressBarMask.displayWidth / (this.scoreTarget / scoreAdd);
+    // if (this.score >= this.scoreTarget){
+    //     alert(`Поздравляем! Вы победили! Ваш Счет ${this.score}`);
+    //     this.gameOver();
+    // }
 }
