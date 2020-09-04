@@ -28,11 +28,11 @@ let gameOptions = {
     fallSpeed: 200,
     destroySpeed: 3,
     shuffleNum: 3,
-    roundTime: 30
+    roundTime: 30,
+    roundScore: 2000
 };
 
 let lastTime;
-let score = 0;
 let cellArray = [];
 let poolArray = [];
 let renderStatus = 'base';
@@ -41,6 +41,26 @@ let renderDestroyArray = [];
 let renderFallArray = [];
 let gameTime = 0;
 let pickedCell;
+
+resources.load([
+    'assets/Background.png',
+    'assets/field.png',
+    'assets/button.png',
+    'assets/button2.png',
+    'assets/background_progress.png',
+    'assets/progress.png',
+    'assets/scorepanel.png',
+    'assets/bonus.png',
+    'assets/money.png',
+    'assets/money2.png',
+    'assets/pause.png',
+    'assets/button_plus.png',
+    'assets/blocks.png',
+    'assets/button.png',
+    'assets/button_plus.png',
+
+]);
+resources.onReady(init);
 
 class cell {
     constructor(pos, index){
@@ -80,7 +100,7 @@ class tile {
                 renderDestroyArray.splice(this.index, 1);
                 renderArray.push(this.index);
             }
-            scoreCount(this);
+            score.calc(this);
         }
 
     }
@@ -102,7 +122,7 @@ class superTile extends tile {
     };
     action(){
         markDestroyTiles(makeSuperArray(this.index));
-        scoreCount(this);
+        score.calc(this);
         // cellArray[this.index.row][this.index.col].type = 'standard';
     }
 }
@@ -136,22 +156,6 @@ function makeSuperArray(index){
     return arr;
 }
 
-resources.load([
-    'assets/Background.png',
-    'assets/field.png',
-    'assets/button.png',
-    'assets/button2.png',
-    'assets/background_progress.png',
-    'assets/scorepanel.png',
-    'assets/bonus.png',
-    'assets/money.png',
-    'assets/money2.png',
-    'assets/pause.png',
-    'assets/button_plus.png',
-    'assets/blocks.png',
-]);
-resources.onReady(init);
-
 function init() {
     drawStaticImages();
     document.getElementById('play-again').addEventListener('click', function() {
@@ -162,15 +166,6 @@ function init() {
     drawField();
     startingFillCells();
     main();
-}
-
-function drawStaticImages(){
-    ctx.drawImage(resources.get('assets/Background.png'), 0, 0);
-    ctx.drawImage(resources.get( 'assets/field.png'), 20, 120, 410, 455);
-    ctx.drawImage(resources.get( 'assets/background_progress.png'), 30, 0, 622, 78);
-    ctx.drawImage(resources.get( 'assets/money.png',), 65, 15, 80, 33);
-    ctx.drawImage(resources.get( 'assets/money2.png',), 500, 15, 110, 33);
-    ctx.drawImage(resources.get( 'assets/scorepanel.png',), 500, 120, 235, 250);
 }
 
 function main() {
@@ -340,7 +335,7 @@ function reset() {
     document.getElementById('game-over').style.display = 'none';
     document.getElementById('game-over-overlay').style.display = 'none';
     gameTime = 0;
-    score = 0;
+    score.value = 0;
 }
 
 function blockSelect(x, y) {
@@ -364,40 +359,77 @@ function blockCheck(index){
     return {row: index.row, col: index.col};
 }
 
-function scoreCount(tile){
-    let tiles = poolArray.length;
-    let scoreAdd = 0;
-    switch (tiles){
-        case 2:
-            scoreAdd = tiles * 10;
-            break;
-        case 3:
-            scoreAdd = tiles * 10 + 10;
-            break;
-        case 4:
-            scoreAdd = tiles * 10 + 20;
-            break;
-        case 5:
-            scoreAdd = tiles * 10 + 30;
-            break;
-        case 6:
-            scoreAdd = tiles * 10 + 40;
-            break;
-        default:
-            scoreAdd = tiles * 10 + 50;
-            break;
+// function scoreCount(tile){
+//     let tiles = poolArray.length;
+//     let scoreAdd = 0;
+//     switch (tiles){
+//         case 2:
+//             scoreAdd = tiles * 10;
+//             break;
+//         case 3:
+//             scoreAdd = tiles * 10 + 10;
+//             break;
+//         case 4:
+//             scoreAdd = tiles * 10 + 20;
+//             break;
+//         case 5:
+//             scoreAdd = tiles * 10 + 30;
+//             break;
+//         case 6:
+//             scoreAdd = tiles * 10 + 40;
+//             break;
+//         default:
+//             scoreAdd = tiles * 10 + 50;
+//             break;
+//     }
+//     score += scoreAdd;
+//     if (tile.type === 'super') score += 20;
+//     // if(pickedBlock.isSuper) this.score += 20;
+//     // this.scoreText.setText(this.score);
+//     // if (this.score.toString().length == 2) this.scoreText.x = 590;
+//     // else if (this.score.toString().length == 3) this.scoreText.x = 582;
+//     // else if (this.score.toString().length == 4) this.scoreText.x = 572;
+//     // else this.scoreText.x = 602;
+//     // this.progressBarMask.x += this.progressBarMask.displayWidth / (this.scoreTarget / scoreAdd);
+//     // if (this.score >= this.scoreTarget){
+//     //     alert(`Поздравляем! Вы победили! Ваш Счет ${this.score}`);
+//     //     this.gameOver();
+//     // }
+// }
+
+let score = {
+    value: 0,
+    x: 616,
+    y: 340,
+    size: 40,
+
+    calc: function (tile) {
+        let tiles = poolArray.length;
+        let scoreAdd = 0;
+        switch (tiles){
+            case 2:
+                scoreAdd = tiles * 10;
+                break;
+            case 3:
+                scoreAdd = tiles * 10 + 10;
+                break;
+            case 4:
+                scoreAdd = tiles * 10 + 20;
+                break;
+            case 5:
+                scoreAdd = tiles * 10 + 30;
+                break;
+            case 6:
+                scoreAdd = tiles * 10 + 40;
+                break;
+            default:
+                scoreAdd = tiles * 10 + 50;
+                break;
+        }
+        if (tile.type === 'super') scoreAdd += 20;
+        this.value += scoreAdd;
+    },
+    draw: function () {
+        drawText(this.value.toString(), this.x, this.y, this.size);
     }
-    score += scoreAdd;
-    if (tile.type === 'super') score += 20;
-    // if(pickedBlock.isSuper) this.score += 20;
-    // this.scoreText.setText(this.score);
-    // if (this.score.toString().length == 2) this.scoreText.x = 590;
-    // else if (this.score.toString().length == 3) this.scoreText.x = 582;
-    // else if (this.score.toString().length == 4) this.scoreText.x = 572;
-    // else this.scoreText.x = 602;
-    // this.progressBarMask.x += this.progressBarMask.displayWidth / (this.scoreTarget / scoreAdd);
-    // if (this.score >= this.scoreTarget){
-    //     alert(`Поздравляем! Вы победили! Ваш Счет ${this.score}`);
-    //     this.gameOver();
-    // }
-}
+};

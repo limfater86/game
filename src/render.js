@@ -5,20 +5,58 @@ function render(dt) {
     renderStaticTiles();
 }
 
+function drawStaticImages(){
+    ctx.drawImage(resources.get('assets/Background.png'), 0, 0);
+    ctx.drawImage(resources.get( 'assets/field.png'), 20, 120, 410, 455);
+    ctx.drawImage(resources.get( 'assets/background_progress.png'), 30, 0, 622, 78);
+    ctx.drawImage(resources.get( 'assets/money.png',), 65, 15, 80, 33);
+    ctx.drawImage(resources.get( 'assets/money2.png',), 500, 15, 110, 33);
+    ctx.drawImage(resources.get( 'assets/scorepanel.png',), 500, 120, 235, 250);
+}
+
 function renderInterface() {
     drawStaticImages();
-    drawScore();
-    // progressbar
+    score.draw();
+    drawProgressbar();
+    drawButtons();
+    drawBonus();
     // time
     // bonus
     //buttons
 }
 
-function drawScore() {
-    ctx.font = '40px Marvin';
+function drawBonus() {
+    drawText('БОНУСЫ', 620, 390, 24);
+    boosterBomb.draw();
+    boosterShuffle.draw();
+}
+
+function drawButtons() {
+    btnStart.draw();
+    btnShuffle.draw();
+    btnAddMoney.draw();
+    btnAddMoney2.draw();
+}
+
+function drawProgressbar() {
+    const MAX_WIDTH = 273;
+    const FULL_WIDTH = 1258;
+    let progress = MAX_WIDTH * score.value/gameOptions.roundScore;
+    let width = FULL_WIDTH * score.value/gameOptions.roundScore;
+    progress > MAX_WIDTH ? progress = MAX_WIDTH : progress;
+    width > FULL_WIDTH ? width = FULL_WIDTH : width;
+    ctx.drawImage(resources.get( 'assets/progress.png',), 0, 0, width, 86, 181, 26, progress, 18);
+}
+
+// function drawScore() {
+//     drawText(score.toString(), 616, 340, 40);
+// }
+
+function drawText(text, x, y, size) {
+    ctx.font = `${size}px Marvin`;
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
-    ctx.fillText(score.toString(), 616, 340);
+    ctx.fillText(text, x, y);
 }
 
 function renderDestroyTiles(dt) {
