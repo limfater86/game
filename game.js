@@ -70,7 +70,7 @@ class cell {
         this.tile = {};
     }
     action(){
-        this.tile.action();
+        boosterBomb.enable ? blastTiles(this.index) : this.tile.action();
     }
 
 }
@@ -100,7 +100,7 @@ class tile {
                 renderDestroyArray.splice(this.index, 1);
                 renderArray.push(this.index);
             }
-            score.calc(this);
+            score.calc(poolArray);
         }
 
     }
@@ -121,10 +121,17 @@ class superTile extends tile {
         this.type = 'super';
     };
     action(){
-        markDestroyTiles(makeSuperArray(this.index));
-        score.calc(this);
+        poolArray = makeSuperArray(this.index);
+        markDestroyTiles(poolArray);
+        score.calc(poolArray);
         // cellArray[this.index.row][this.index.col].type = 'standard';
     }
+}
+
+function blastTiles(index) {
+    poolArray = boosterBomb.blast(index);
+    markDestroyTiles(poolArray);
+    score.calc(poolArray);
 }
 
 function placeSuperTile(index) {
@@ -359,52 +366,14 @@ function blockCheck(index){
     return {row: index.row, col: index.col};
 }
 
-// function scoreCount(tile){
-//     let tiles = poolArray.length;
-//     let scoreAdd = 0;
-//     switch (tiles){
-//         case 2:
-//             scoreAdd = tiles * 10;
-//             break;
-//         case 3:
-//             scoreAdd = tiles * 10 + 10;
-//             break;
-//         case 4:
-//             scoreAdd = tiles * 10 + 20;
-//             break;
-//         case 5:
-//             scoreAdd = tiles * 10 + 30;
-//             break;
-//         case 6:
-//             scoreAdd = tiles * 10 + 40;
-//             break;
-//         default:
-//             scoreAdd = tiles * 10 + 50;
-//             break;
-//     }
-//     score += scoreAdd;
-//     if (tile.type === 'super') score += 20;
-//     // if(pickedBlock.isSuper) this.score += 20;
-//     // this.scoreText.setText(this.score);
-//     // if (this.score.toString().length == 2) this.scoreText.x = 590;
-//     // else if (this.score.toString().length == 3) this.scoreText.x = 582;
-//     // else if (this.score.toString().length == 4) this.scoreText.x = 572;
-//     // else this.scoreText.x = 602;
-//     // this.progressBarMask.x += this.progressBarMask.displayWidth / (this.scoreTarget / scoreAdd);
-//     // if (this.score >= this.scoreTarget){
-//     //     alert(`Поздравляем! Вы победили! Ваш Счет ${this.score}`);
-//     //     this.gameOver();
-//     // }
-// }
-
 let score = {
     value: 0,
     x: 616,
     y: 340,
     size: 40,
 
-    calc: function (tile) {
-        let tiles = poolArray.length;
+    calc: function (arr) {
+        let tiles = arr.length;
         let scoreAdd = 0;
         switch (tiles){
             case 2:
@@ -426,10 +395,20 @@ let score = {
                 scoreAdd = tiles * 10 + 50;
                 break;
         }
-        if (tile.type === 'super') scoreAdd += 20;
         this.value += scoreAdd;
     },
     draw: function () {
         drawText(this.value.toString(), this.x, this.y, this.size);
     }
 };
+
+function shuffleField(){
+    // console.log(cellArray);
+    // console.log('pressed Button');
+    for (let i = 0; i < gameOptions.fieldSize; i++) {
+        for (let j = 0; j < gameOptions.fieldSize; j++) {
+            cellArray[i][j].tile.sprite.frames = randomColor();
+        }
+    }
+    // console.log(cellArray);
+}

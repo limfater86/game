@@ -25,6 +25,7 @@ let btnShuffle = {
     },
     click: function () {
         console.log('pressed Shuffle Button');
+        shuffleField();
     }
 };
 
@@ -64,14 +65,34 @@ let boosterBomb = {
     w: 437,
     h: 451,
     scale: 0.26,
-    count: 0,
+    count: 5,
+    enable: false,
     draw: function(){
         ctx.drawImage(resources.get( 'assets/bonus.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
         drawText('Bomb', this.x+57, this.y+50, 18);
         drawText(this.count.toString(), this.x+45, this.y+90, 24);
     },
     click: function () {
-        console.log('pressed BoosterBomb Button');
+        if (this.count > 0){
+            this.enable ? this.enable = false : this.enable = true;
+            console.log(`Нажата кнопка boosterBomb boosterActive = ${this.enable}`);
+        }
+    },
+    blast: function (index){
+        if (boosterBomb.count > 0){
+            let arr = [];
+            for (let i = -1; i < 2; i++) {
+                for (let j = -1; j < 2; j++) {
+                    if (index.row+i >= 0 && index.row+i < gameOptions.fieldSize && index.col+j >= 0 && index.col+j < gameOptions.fieldSize) {
+                        arr.push({row: index.row + i, col: index.col + j});
+                    }
+                }
+            }
+            boosterBomb.count--;
+            boosterBomb.enable = false;
+            return arr;
+        }
+
     }
 };
 
@@ -88,7 +109,10 @@ let boosterShuffle = {
         drawText(this.count.toString(), this.x+45, this.y+90, 24);
     },
     click: function () {
-        console.log('pressed BoosterShuffle Button');
+        if (this.count > 0){
+            shuffleField();
+            this.count--;
+        }
     }
 };
 
