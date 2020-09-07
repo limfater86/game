@@ -20,7 +20,7 @@ function renderInterface() {
     drawProgressbar();
     drawButtons();
     drawBonus();
-    // time
+    roundTimer.draw();
     // bonus
     //buttons
 }
@@ -201,6 +201,14 @@ function renderEntities(list) {
 
 function renderEntity(entity) {
     entity.tile.sprite.render(ctx);
+}
+
+function renderClear() {
+    cellArray = [];
+    renderArray = [];
+    renderDestroyArray = [];
+    renderFallArray = [];
+    renderStatus = 'base';
 }
 
 // function renderEntity(entity) {

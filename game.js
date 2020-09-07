@@ -28,7 +28,7 @@ let gameOptions = {
     fallSpeed: 200,
     destroySpeed: 3,
     shuffleNum: 3,
-    roundTime: 30,
+    roundTime: 60,
     roundScore: 2000
 };
 
@@ -39,8 +39,9 @@ let renderStatus = 'base';
 let renderArray = [];
 let renderDestroyArray = [];
 let renderFallArray = [];
-let gameTime = 0;
+let canPick = false;
 let pickedCell;
+let isMoveAvailable = false;
 
 resources.load([
     'assets/Background.png',
@@ -70,7 +71,7 @@ class cell {
         this.tile = {};
     }
     action(){
-        boosterBomb.enable ? blastTiles(this.index) : this.tile.action();
+        if (canPick) boosterBomb.enable ? blastTiles(this.index) : this.tile.action();
     }
 
 }
@@ -94,6 +95,7 @@ class tile {
 
     action(){
         if (findMatch(this.index)) {
+            canPick = false;
             markDestroyTiles(poolArray);
             if (poolArray.length > 6) {
                 placeSuperTile(this.index);
@@ -121,6 +123,7 @@ class superTile extends tile {
         this.type = 'super';
     };
     action(){
+        canPick = false;
         poolArray = makeSuperArray(this.index);
         markDestroyTiles(poolArray);
         score.calc(poolArray);
@@ -129,6 +132,7 @@ class superTile extends tile {
 }
 
 function blastTiles(index) {
+    canPick = false;
     poolArray = boosterBomb.blast(index);
     markDestroyTiles(poolArray);
     score.calc(poolArray);
@@ -164,14 +168,15 @@ function makeSuperArray(index){
 }
 
 function init() {
-    drawStaticImages();
-    document.getElementById('play-again').addEventListener('click', function() {
-        reset();
-    });
-    reset();
+    // drawStaticImages();
+    // document.getElementById('play-again').addEventListener('click', function() {
+    //     reset();
+    // });
+    // reset();
     lastTime = Date.now();
-    drawField();
-    startingFillCells();
+    // drawField();
+    // startingFillCells();
+    // roundTimer.start(gameOptions.roundTime);
     main();
 }
 
@@ -245,6 +250,12 @@ function update(dt) {
         refillField();
         refillRenderArray();
         renderStatus = 'base';
+        canPick = true;
+    }
+    if(score.value > gameOptions.roundScore){
+        roundTimer.stop();
+        reset();
+        alert(`Поздравляем! Вы выиграли!`);
     }
     // updateGameTime(dt);
     // updateEntities(dt);
@@ -339,10 +350,12 @@ function updateEntities(dt) {
 }
 
 function reset() {
-    document.getElementById('game-over').style.display = 'none';
-    document.getElementById('game-over-overlay').style.display = 'none';
-    gameTime = 0;
+    // document.getElementById('game-over').style.display = 'none';
+    // document.getElementById('game-over-overlay').style.display = 'none';
     score.value = 0;
+    boosterShuffle.count = 0;
+    boosterBomb.count = 0;
+    renderClear();
 }
 
 function blockSelect(x, y) {
@@ -412,3 +425,34 @@ function shuffleField(){
     }
     // console.log(cellArray);
 }
+
+let roundTimer = {
+    x: 617,
+    y: 237,
+    size: 54,
+    time: 0,
+    timerId: 0,
+    interval: 1000,
+    start: function(time){
+        this.time = time;
+        this.timerId = setInterval(this.handler, roundTimer.interval);
+    },
+    handler: function () {
+        if (roundTimer.time > 0){
+            roundTimer.time--;
+        } else {
+            roundTimer.stop();
+            canPick = false;
+            alert(`Время вышло! Вы проиграли! Ваш счет: ${score.value}`);
+            reset();
+        }
+
+    },
+    draw: function () {
+        drawText(this.time.toString(), this.x, this.y, this.size);
+    },
+    stop: function () {
+        clearInterval(this.timerId);
+        this.time = 0;
+    }
+};

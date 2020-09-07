@@ -1,5 +1,7 @@
 
 (function() {
+    document.addEventListener("mouseup", inputHandler,false);
+
     // var pressedKeys = {};
     //
     // function setKey(event, status) {
@@ -25,9 +27,6 @@
     //     pressedKeys[key] = status;
     // }
 
-    document.addEventListener('mouseup', function(e) {
-        blockSelect(e.offsetX, e.offsetY);
-    });
     // document.addEventListener('keydown', function(e) {
     //     setKey(e, true);
     // });
@@ -47,3 +46,14 @@
     //     }
     // };
 })();
+
+function inputHandler(e){
+    blockSelect(e.offsetX, e.offsetY);
+    if(checkCollision(e.offsetX,e.offsetY, btnStart)) {btnStart.click()}
+    else if (checkCollision(e.offsetX,e.offsetY, btnShuffle)) {btnShuffle.click()}
+    else if (checkCollision(e.offsetX,e.offsetY, btnAddMoney)) {btnAddMoney.click()}
+    else if (checkCollision(e.offsetX,e.offsetY, btnAddMoney2)) {btnAddMoney2.click()}
+    else if (checkCollision(e.offsetX,e.offsetY, boosterBomb)) {boosterBomb.click()}
+    else if (checkCollision(e.offsetX,e.offsetY, boosterShuffle)) {boosterShuffle.click()}
+
+}

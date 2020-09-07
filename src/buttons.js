@@ -10,6 +10,12 @@ let btnStart = {
     },
     click: function () {
         console.log('pressed Start Button');
+        canPick = true;
+        drawField();
+        startingFillCells();
+        roundTimer.start(gameOptions.roundTime);
+        boosterBomb.count = 5;
+        boosterShuffle.count = 5;
     }
 };
 
@@ -24,8 +30,10 @@ let btnShuffle = {
         drawText('ПЕРЕМЕШАТЬ',this.x+75, this.y+32, 18);
     },
     click: function () {
-        console.log('pressed Shuffle Button');
-        shuffleField();
+        if (!isMoveAvailable){
+            shuffleField();
+        }
+
     }
 };
 
@@ -65,7 +73,7 @@ let boosterBomb = {
     w: 437,
     h: 451,
     scale: 0.26,
-    count: 5,
+    count: 0,
     enable: false,
     draw: function(){
         ctx.drawImage(resources.get( 'assets/bonus.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
@@ -76,10 +84,11 @@ let boosterBomb = {
         if (this.count > 0){
             this.enable ? this.enable = false : this.enable = true;
             console.log(`Нажата кнопка boosterBomb boosterActive = ${this.enable}`);
+            console.log(this.count);
         }
     },
     blast: function (index){
-        if (boosterBomb.count > 0){
+        if (this.count > 0){
             let arr = [];
             for (let i = -1; i < 2; i++) {
                 for (let j = -1; j < 2; j++) {
@@ -88,8 +97,8 @@ let boosterBomb = {
                     }
                 }
             }
-            boosterBomb.count--;
-            boosterBomb.enable = false;
+            this.count--;
+            this.enable = false;
             return arr;
         }
 
@@ -115,19 +124,6 @@ let boosterShuffle = {
         }
     }
 };
-
-canvas.addEventListener("mouseup", buttonsHandler,false);
-
-
-function buttonsHandler(e){
-    if(checkCollision(e.offsetX,e.offsetY, btnStart)) {btnStart.click()}
-    else if (checkCollision(e.offsetX,e.offsetY, btnShuffle)) {btnShuffle.click()}
-    else if (checkCollision(e.offsetX,e.offsetY, btnAddMoney)) {btnAddMoney.click()}
-    else if (checkCollision(e.offsetX,e.offsetY, btnAddMoney2)) {btnAddMoney2.click()}
-    else if (checkCollision(e.offsetX,e.offsetY, boosterBomb)) {boosterBomb.click()}
-    else if (checkCollision(e.offsetX,e.offsetY, boosterShuffle)) {boosterShuffle.click()}
-
-}
 
 
 // let btnStart = function (button) {
