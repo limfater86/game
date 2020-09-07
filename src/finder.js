@@ -8,6 +8,30 @@ function SameColorAreasFinder () {
         return matchedBlocks;
     };
 
+    this.findMove = function () {
+        let fullScan = [];
+        let arr;
+        for (let i = 0; i < gameOptions.fieldSize; i++) { //одномерный массив объектов с последовательными индексами блоков, для последовательной полной проверки
+            for (let j = 0; j < gameOptions.fieldSize; j++){
+                let blockIndex = {row: i, col: j};
+                fullScan.push(blockIndex);
+            }
+        }
+        while (fullScan.length > 0){
+            arr = finder.scan(fullScan[0]);
+            if (arr.length > gameOptions.minAreaSize){
+                return arr;
+            }
+            arr.forEach((itemMatch) => {
+                let index = fullScan.findIndex((itemScan)=> (itemMatch.row == itemScan.row) && (itemMatch.col == itemScan.col));
+                if (index !== -1){
+                    fullScan.splice(index, 1);
+                }
+            });
+        }
+        return arr;
+    };
+
     function init(scanBlock) {
         matchedBlocks = [];
         scannedBlocks = [];

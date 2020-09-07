@@ -39,7 +39,9 @@ let renderStatus = 'base';
 let renderArray = [];
 let renderDestroyArray = [];
 let renderFallArray = [];
+let move = [];
 let canPick = false;
+let checkMove = false;
 let pickedCell;
 let isMoveAvailable = false;
 
@@ -127,7 +129,6 @@ class superTile extends tile {
         poolArray = makeSuperArray(this.index);
         markDestroyTiles(poolArray);
         score.calc(poolArray);
-        // cellArray[this.index.row][this.index.col].type = 'standard';
     }
 }
 
@@ -243,6 +244,13 @@ function randomColor(){
 
 function update(dt) {
     doPickedCellActions();
+    if(checkMove){
+        canPick = false;
+        move = finder.findMove();
+        move.length > 2 ? isMoveAvailable = true: isMoveAvailable = false;
+        canPick = true;
+        checkMove = false;
+    }
     if (renderStatus === 'destroyComplete'){
         renderStatus = 'fall';
         makeTilesFall();
@@ -251,14 +259,14 @@ function update(dt) {
         refillRenderArray();
         renderStatus = 'base';
         canPick = true;
+        checkMove = true;
     }
-    if(score.value > gameOptions.roundScore){
-        roundTimer.stop();
+    if(score.value >= gameOptions.roundScore){
+        let roundScore = score.value;
         reset();
-        alert(`Поздравляем! Вы выиграли!`);
+        alert(`Поздравляем! Вы выиграли! Ваш счет: ${roundScore}`);
     }
-    // updateGameTime(dt);
-    // updateEntities(dt);
+
 }
 
 function refillField(){
@@ -267,10 +275,6 @@ function refillField(){
         if(emptyBlocks > 0){
             for (let i = 0; i < emptyBlocks; i++){
                 fillCell(cellArray[i][j].pos, i, j);
-                // cellArray[i][j].tile.sprite.frames = randomColor();
-                // cellArray[i][j].isEmpty = false;
-                // this.gameArray[i][j].blockSprite.x = gameOptions.fieldOffcetX + gameOptions.blockWidth * gameOptions.blockScale * j + gameOptions.blockWidth / 2;
-                // this.gameArray[i][j].blockSprite.y = gameOptions.fieldOffcetY + gameOptions.blockHeight * gameOptions.blockScale / 2 - (emptyBlocks - i) * gameOptions.blockHeight * gameOptions.blockScale;
             }
         }
     }
@@ -308,12 +312,6 @@ function makeTilesFall() {
                     cellArray[i+holes][j].tile = cellArray[i][j].tile;
                     cellArray[i+holes][j].tile.pos.y = cellArray[i+holes][j].pos.y;
                     cellArray[i+holes][j].tile.index.row = cellArray[i+holes][j].index.row;
-                    // cellArray[i+holes][j].tile.sprite.frames = cellArray[i][j].tile.sprite.frames;
-                    // cellArray[i+holes][j].tile.sprite.pos.y = cellArray[i][j].tile.sprite.pos.y;
-                    // cellArray[i+holes][j].tile.type = cellArray[i][j].tile.type;
-                    // cellArray[i+holes][j].tile.pos = cellArray[i+holes][j].pos;
-                    // cellArray[i+holes][j].tile.index.row = cellArray[i+holes][j].index.row;
-                    // cellArray[i+holes][j].tile.index.col = cellArray[i+holes][j].index.col;
                 }
             }
         }
@@ -340,21 +338,16 @@ function doPickedCellActions() {
     }
 }
 
-function updateGameTime(dt){
-    gameTime += dt;
-}
-
-function updateEntities(dt) {
-
-
-}
-
 function reset() {
     // document.getElementById('game-over').style.display = 'none';
     // document.getElementById('game-over-overlay').style.display = 'none';
     score.value = 0;
     boosterShuffle.count = 0;
+    btnShuffle.count = 0;
     boosterBomb.count = 0;
+    roundTimer.stop();
+    canPick = false;
+    checkMove = false;
     renderClear();
 }
 
@@ -416,14 +409,11 @@ let score = {
 };
 
 function shuffleField(){
-    // console.log(cellArray);
-    // console.log('pressed Button');
     for (let i = 0; i < gameOptions.fieldSize; i++) {
         for (let j = 0; j < gameOptions.fieldSize; j++) {
             cellArray[i][j].tile.sprite.frames = randomColor();
         }
     }
-    // console.log(cellArray);
 }
 
 let roundTimer = {
@@ -441,10 +431,10 @@ let roundTimer = {
         if (roundTimer.time > 0){
             roundTimer.time--;
         } else {
-            roundTimer.stop();
-            canPick = false;
-            alert(`Время вышло! Вы проиграли! Ваш счет: ${score.value}`);
+            let roundScore = score.value;
             reset();
+            alert(`Время вышло! Вы проиграли! Ваш счет: ${roundScore}`);
+            
         }
 
     },

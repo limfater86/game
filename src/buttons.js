@@ -16,6 +16,7 @@ let btnStart = {
         roundTimer.start(gameOptions.roundTime);
         boosterBomb.count = 5;
         boosterShuffle.count = 5;
+        checkMove = true;
     }
 };
 
@@ -25,6 +26,7 @@ let btnShuffle = {
     w: 496,
     h: 157,
     scale: 0.3,
+    count: 0,
     draw: function(){
         ctx.drawImage(resources.get( 'assets/button2.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
         drawText('ПЕРЕМЕШАТЬ',this.x+75, this.y+32, 18);
@@ -32,6 +34,11 @@ let btnShuffle = {
     click: function () {
         if (!isMoveAvailable){
             shuffleField();
+            this.count++;
+        }
+        if (this.count > 4){
+            reset();
+            alert('Нет доступных ходов! Вы проиграли!');
         }
 
     }
@@ -84,7 +91,6 @@ let boosterBomb = {
         if (this.count > 0){
             this.enable ? this.enable = false : this.enable = true;
             console.log(`Нажата кнопка boosterBomb boosterActive = ${this.enable}`);
-            console.log(this.count);
         }
     },
     blast: function (index){
@@ -124,24 +130,6 @@ let boosterShuffle = {
         }
     }
 };
-
-
-// let btnStart = function (button) {
-//     let x = 520;
-//     let y = 550;
-//     let w = 110;
-//     let h = 47;
-//     let scale = 0.3;
-//     this.handleEvent = function(e){
-//         if(checkCollision(e.offsetX,e.offsetY, this))
-//             alert("Retrying!")
-//     };
-//     ctx.drawImage(resources.get( 'assets/button.png',), 0, 0, w, h, x, y, w*scale, h*scale);
-//     button.addEventListener("mouseup", this, false);
-//
-// };
-
-
 
 function checkCollision(x, y, obj){
     return x >= obj.x && x <= obj.x + obj.w*obj.scale &&
