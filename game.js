@@ -73,7 +73,7 @@ class cell {
         this.tile = {};
     }
     action(){
-        if (canPick) boosterBomb.enable ? blastTiles(this.index) : this.tile.action();
+        if (canPick) boosters.bomb.enable ? blastTiles(this.index) : this.tile.action();
     }
 
 }
@@ -83,7 +83,6 @@ class tile {
             url: 'assets/blocks.png',
             pos: {x: pos.x, y: pos.y},
             size: [gameOptions.blockWidth, gameOptions.blockHeight],
-            speed: 0,
             frames: frame,
             scale: gameOptions.blockScale,
             alpha: 1
@@ -134,7 +133,7 @@ class superTile extends tile {
 
 function blastTiles(index) {
     canPick = false;
-    poolArray = boosterBomb.blast(index);
+    poolArray = boosters.bomb.blast(index);
     markDestroyTiles(poolArray);
     score.calc(poolArray);
 }
@@ -342,9 +341,9 @@ function reset() {
     // document.getElementById('game-over').style.display = 'none';
     // document.getElementById('game-over-overlay').style.display = 'none';
     score.value = 0;
-    boosterShuffle.count = 0;
+    boosters.shuffle.count = 0;
     btnShuffle.count = 0;
-    boosterBomb.count = 0;
+    boosters.bomb.count = 0;
     roundTimer.stop();
     canPick = false;
     checkMove = false;

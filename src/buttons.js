@@ -14,8 +14,8 @@ let btnStart = {
         drawField();
         startingFillCells();
         roundTimer.start(gameOptions.roundTime);
-        boosterBomb.count = 5;
-        boosterShuffle.count = 5;
+        boosters.bomb.count = 5;
+        boosters.shuffle.count = 5;
         checkMove = true;
     }
 };
@@ -74,7 +74,18 @@ let btnAddMoney2 = {
     }
 };
 
-let boosterBomb = {
+let boosters = {
+    bomb: {},
+    shuffle: {},
+    x: 620,
+    y: 390,
+    textSize: 24,
+    draw: function () {
+        drawText('БОНУСЫ', this.x, this.y, this.textSize);
+    }
+};
+
+boosters.bomb = {
     x: 505,
     y: 400,
     w: 437,
@@ -111,7 +122,7 @@ let boosterBomb = {
     }
 };
 
-let boosterShuffle = {
+boosters.shuffle = {
     x: 620,
     y: 400,
     w: 437,

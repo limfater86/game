@@ -53,7 +53,7 @@ function inputHandler(e){
     else if (checkCollision(e.offsetX,e.offsetY, btnShuffle)) {btnShuffle.click()}
     else if (checkCollision(e.offsetX,e.offsetY, btnAddMoney)) {btnAddMoney.click()}
     else if (checkCollision(e.offsetX,e.offsetY, btnAddMoney2)) {btnAddMoney2.click()}
-    else if (checkCollision(e.offsetX,e.offsetY, boosterBomb)) {boosterBomb.click()}
-    else if (checkCollision(e.offsetX,e.offsetY, boosterShuffle)) {boosterShuffle.click()}
+    else if (checkCollision(e.offsetX,e.offsetY, boosters.bomb)) {boosters.bomb.click()}
+    else if (checkCollision(e.offsetX,e.offsetY, boosters.shuffle)) {boosters.shuffle.click()}
 
 }
