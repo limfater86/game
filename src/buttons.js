@@ -82,6 +82,8 @@ let boosters = {
     textSize: 24,
     draw: function () {
         drawText('БОНУСЫ', this.x, this.y, this.textSize);
+        this.bomb.draw();
+        this.shuffle.draw();
     }
 };
 

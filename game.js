@@ -371,6 +371,14 @@ function blockCheck(index){
     return {row: index.row, col: index.col};
 }
 
+function shuffleField(){
+    for (let i = 0; i < gameOptions.fieldSize; i++) {
+        for (let j = 0; j < gameOptions.fieldSize; j++) {
+            cellArray[i][j].tile.sprite.frames = randomColor();
+        }
+    }
+}
+
 let score = {
     value: 0,
     x: 616,
@@ -406,14 +414,6 @@ let score = {
         drawText(this.value.toString(), this.x, this.y, this.size);
     }
 };
-
-function shuffleField(){
-    for (let i = 0; i < gameOptions.fieldSize; i++) {
-        for (let j = 0; j < gameOptions.fieldSize; j++) {
-            cellArray[i][j].tile.sprite.frames = randomColor();
-        }
-    }
-}
 
 let roundTimer = {
     x: 617,
