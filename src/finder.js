@@ -11,10 +11,9 @@ function SameColorAreasFinder () {
     this.findMove = function () {
         let fullScan = [];
         let arr;
-        for (let i = 0; i < gameOptions.fieldSize; i++) { //одномерный массив объектов с последовательными индексами блоков, для последовательной полной проверки
+        for (let i = 0; i < gameOptions.fieldSize; i++) {
             for (let j = 0; j < gameOptions.fieldSize; j++){
-                let blockIndex = {row: i, col: j};
-                fullScan.push(blockIndex);
+                fullScan.push({row: i, col: j});
             }
         }
         while (fullScan.length > 0){
@@ -43,6 +42,7 @@ function SameColorAreasFinder () {
     function doScan() {
         while (currentScan.length){
             blockScan(currentScan[0]);
+            currentScan.shift();
         }
     }
     function blockScan (scanBlock){
@@ -58,13 +58,12 @@ function SameColorAreasFinder () {
                 nearbyBlockCheck(nearbyBlock, scanBlock);
             }
         }
-        currentScan.shift();
     }
     function nearbyBlockCheck (nearBlock, scanBlock){
         let include = scannedBlocks.findIndex((item)=> (item.row == nearBlock.row) && (item.col == nearBlock.col));
         if (include === -1){
             if (nearBlock.row >= 0 && nearBlock.row < gameOptions.fieldSize && nearBlock.col >= 0 && nearBlock.col < gameOptions.fieldSize) {
-                if (cellArray[nearBlock.row][nearBlock.col].tile.sprite.frames === cellArray[scanBlock.row][scanBlock.col].tile.sprite.frames){
+                if (getSprite(nearBlock.row, nearBlock.col).frames === getSprite(scanBlock.row, scanBlock.col).frames){
                     matchedBlocks.push(nearBlock);
                     currentScan.push(nearBlock);
                 }

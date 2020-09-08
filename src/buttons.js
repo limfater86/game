@@ -1,30 +1,30 @@
 let btnStart = {
-    x: 470,
-    y: 530,
-    w: 367,
-    h: 157,
+    x: 470, y: 530,
+    w: 367, h: 157,
     scale: 0.3,
     draw: function(){
         ctx.drawImage(resources.get( 'assets/button.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
         drawText('СТАРТ',this.x+55, this.y+32, 20);
     },
     click: function () {
-        console.log('pressed Start Button');
-        canPick = true;
-        drawField();
-        startingFillCells();
-        roundTimer.start(gameOptions.roundTime);
-        boosters.bomb.count = 5;
-        boosters.shuffle.count = 5;
-        checkMove = true;
+        if (!gameIsStarted){
+            gameIsStarted = true;
+            console.log('pressed Start Button');
+            canPick = true;
+            drawField();
+            startingFillCells();
+            roundTimer.start(gameOptions.roundTime);
+            boosters.bomb.count = 5;
+            boosters.shuffle.count = 5;
+            checkMove = true;
+        }
+
     }
 };
 
 let btnShuffle = {
-    x: 620,
-    y: 530,
-    w: 496,
-    h: 157,
+    x: 620, y: 530,
+    w: 496, h: 157,
     scale: 0.3,
     count: 0,
     draw: function(){
@@ -45,10 +45,8 @@ let btnShuffle = {
 };
 
 let btnAddMoney = {
-    x: 65,
-    y: 15,
-    w: 122,
-    h: 126,
+    x: 65, y: 15,
+    w: 122, h: 126,
     scale: 0.26,
     draw: function(){
         ctx.drawImage(resources.get( 'assets/button_plus.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
@@ -60,10 +58,8 @@ let btnAddMoney = {
 };
 
 let btnAddMoney2 = {
-    x: 500,
-    y: 15,
-    w: 122,
-    h: 126,
+    x: 500, y: 15,
+    w: 122, h: 126,
     scale: 0.26,
     draw: function(){
         ctx.drawImage(resources.get( 'assets/button_plus.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
@@ -77,8 +73,7 @@ let btnAddMoney2 = {
 let boosters = {
     bomb: {},
     shuffle: {},
-    x: 620,
-    y: 390,
+    x: 620, y: 390,
     textSize: 24,
     draw: function () {
         drawText('БОНУСЫ', this.x, this.y, this.textSize);
@@ -88,10 +83,8 @@ let boosters = {
 };
 
 boosters.bomb = {
-    x: 505,
-    y: 400,
-    w: 437,
-    h: 451,
+    x: 505, y: 400,
+    w: 437, h: 451,
     scale: 0.26,
     count: 0,
     enable: false,
@@ -125,10 +118,8 @@ boosters.bomb = {
 };
 
 boosters.shuffle = {
-    x: 620,
-    y: 400,
-    w: 437,
-    h: 451,
+    x: 620, y: 400,
+    w: 437, h: 451,
     scale: 0.26,
     count: 0,
     draw: function(){

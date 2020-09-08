@@ -33,7 +33,6 @@ let gameOptions = {
 };
 
 let lastTime;
-let cellArray = [];
 let poolArray = [];
 let renderStatus = 'base';
 let renderArray = [];
@@ -44,6 +43,7 @@ let canPick = false;
 let checkMove = false;
 let pickedCell;
 let isMoveAvailable = false;
+let gameIsStarted = false;
 
 resources.load([
     'assets/Background.png',
@@ -95,16 +95,13 @@ class tile {
     }
 
     action(){
-        if (findMatch(this.index)) {
-            canPick = false;
+        canPick = false;
+        poolArray = finder.scan(this.index);
+        if (poolArray.length >= gameOptions.minAreaSize) {
             markDestroyTiles(poolArray);
-            if (poolArray.length > 6) {
-                placeSuperTile(this.index);
-                renderDestroyArray.splice(this.index, 1);
-                renderArray.push(this.index);
-            }
+            checkOnSuper(this.index);
             score.calc(poolArray);
-        }
+        } else canPick = true;
 
     }
 
@@ -131,6 +128,14 @@ class superTile extends tile {
     }
 }
 
+function checkOnSuper(index) {
+    if (poolArray.length > 6) {
+        placeSuperTile(index);
+        renderDestroyArray.splice(index, 1);
+        renderArray.push(index);
+    }
+}
+
 function blastTiles(index) {
     canPick = false;
     poolArray = boosters.bomb.blast(index);
@@ -146,15 +151,10 @@ function markDestroyTiles(arr) {
     arr.forEach((item) => {
         renderDestroyArray.push(item);
         deleteFromRenderArray(item);
-        cellArray[item.row][item.col].isEmpty = true;
+        getCell(item.row, item.col).isEmpty = true;
+        // cellArray[item.row][item.col].isEmpty = true;
     });
     renderStatus = 'destroy';
-}
-
-function findMatch(index){
-    poolArray = [];
-    poolArray = finder.scan(index);
-    return poolArray.length > 1;
 }
 
 let finder = new SameColorAreasFinder();
@@ -168,15 +168,7 @@ function makeSuperArray(index){
 }
 
 function init() {
-    // drawStaticImages();
-    // document.getElementById('play-again').addEventListener('click', function() {
-    //     reset();
-    // });
-    // reset();
     lastTime = Date.now();
-    // drawField();
-    // startingFillCells();
-    // roundTimer.start(gameOptions.roundTime);
     main();
 }
 
@@ -196,18 +188,18 @@ function timeTick() {
 
 function drawField(){
     for (let i = 0; i < gameOptions.fieldSize; i++){
-        cellArray[i] = [];
+        getRawCellData()[i] = [];
         for (let j = 0; j < gameOptions.fieldSize; j++){
-            cellArray[i][j] = new cell(makePosition(i, j), {row: i, col: j});
+            getRawCellData()[i][j] = new cell(makePosition(i, j), {row: i, col: j});
         }
     }
-
+    // let cells = new data(cellArray);
 }
 
 function startingFillCells() {
-    for (let i = 0; i < cellArray.length; i++){
-        for (let j = 0; j < cellArray[i].length; j++){
-            fillCell(cellArray[i][j].pos, i, j);
+    for (let i = 0; i < getRawCellData().length; i++){
+        for (let j = 0; j < getRawCellData()[i].length; j++){
+            fillCell(getCell(i, j).pos, i, j);
             renderArray.push({row: i, col: j});
         }
     }
@@ -220,9 +212,9 @@ function fillCells(array) {
 }
 
 function fillCell(pos, i, j, type = 'standard') {
-    if (type === 'standard') cellArray[i][j].tile = createStandardTile(pos, i, j);
-    else cellArray[i][j].tile = createSuperTile(pos, i, j);
-    cellArray[i][j].isEmpty = false;
+    if (type === 'standard') getCell(i, j).tile = createStandardTile(pos, i, j);
+    else getCell(i, j).tile = createSuperTile(pos, i, j);
+    getCell(i, j).isEmpty = false;
 }
 
 function createStandardTile(pos, i,j, state){
@@ -273,7 +265,7 @@ function refillField(){
         let emptyBlocks = holesInCol(j);
         if(emptyBlocks > 0){
             for (let i = 0; i < emptyBlocks; i++){
-                fillCell(cellArray[i][j].pos, i, j);
+                fillCell(getCell(i, j).pos, i, j);
             }
         }
     }
@@ -281,15 +273,15 @@ function refillField(){
 function holesInCol(col){
     let result = 0;
     for (let i = 0; i < gameOptions.fieldSize; i++){
-        if(cellArray[i][col].isEmpty) result++;
+        if(getCell(i, col).isEmpty) result++;
     }
     return result;
 }
 
 function refillRenderArray() {
     renderArray = [];
-    for (let i = 0; i < cellArray.length; i++){
-        for (let j = 0; j < cellArray[i].length; j++){
+    for (let i = 0; i < getRawCellData().length; i++){
+        for (let j = 0; j < getRawCellData()[i].length; j++){
             renderArray.push({row: i, col: j});
         }
     }
@@ -298,7 +290,7 @@ function refillRenderArray() {
 function makeTilesFall() {
     for (let i = gameOptions.fieldSize - 2; i >= 0; i--){
         for (let j = 0; j < gameOptions.fieldSize; j++){
-            if (!cellArray[i][j].isEmpty){
+            if (!getCell(i, j).isEmpty){
                 let holes = holesBelow(i, j);
                 if (holes > 0){
                     let item = {row: i, col: j};
@@ -306,11 +298,11 @@ function makeTilesFall() {
                     item = {row: i+holes, col: j};
                     renderFallArray.push(item);
                     deleteFromRenderArray(item);
-                    cellArray[i][j].isEmpty = true;
-                    cellArray[i+holes][j].isEmpty = false;
-                    cellArray[i+holes][j].tile = cellArray[i][j].tile;
-                    cellArray[i+holes][j].tile.pos.y = cellArray[i+holes][j].pos.y;
-                    cellArray[i+holes][j].tile.index.row = cellArray[i+holes][j].index.row;
+                    getCell(i, j).isEmpty = true;
+                    getCell(i+holes, j).isEmpty = false;
+                    getCell((i+holes), j).tile = getCell(i,j).tile;
+                    getTile(i+holes, j).pos.y = getCell((i+holes), j).pos.y;
+                    getTile(i+holes, j).index.row = getCell((i+holes), j).index.row;
                 }
             }
         }
@@ -325,14 +317,14 @@ function deleteFromRenderArray(item) {
 function holesBelow(row, col) {
     let result = 0;
     for (let i = row+1; i < gameOptions.fieldSize; i++) {
-        if (cellArray[i][col].isEmpty) result++;
+        if (getCell(i, col).isEmpty) result++;
     }
     return result;
 }
 
 function doPickedCellActions() {
     if (pickedCell){
-        cellArray[pickedCell.row][pickedCell.col].action();
+        getCell(pickedCell.row, pickedCell.col).action();
         pickedCell = 0;
     }
 }
@@ -347,6 +339,9 @@ function reset() {
     roundTimer.stop();
     canPick = false;
     checkMove = false;
+    gameIsStarted = false;
+    let c =  getRawCellData();
+    c = [];
     renderClear();
 }
 
@@ -374,7 +369,7 @@ function blockCheck(index){
 function shuffleField(){
     for (let i = 0; i < gameOptions.fieldSize; i++) {
         for (let j = 0; j < gameOptions.fieldSize; j++) {
-            cellArray[i][j].tile.sprite.frames = randomColor();
+            getSprite(i, j).frames = randomColor();
         }
     }
 }

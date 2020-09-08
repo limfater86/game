@@ -48,26 +48,25 @@ function calcTransparency(dt) {
 }
 
 function getSpriteAlpha(index) {
-    return cellArray[index.row][index.col].tile.sprite.alpha;
+    return getSprite(index.row, index.col).alpha;
 }
 
 function setSpriteTransparency(alpha) {
     renderDestroyArray.forEach(item => {
-        cellArray[item.row][item.col].tile.sprite.alpha = alpha;
+        getSprite(item.row, item.col).alpha = alpha;
     })
 }
 
 function renderFallTiles(dt) {
     let onPos = 0;
     renderFallArray.forEach(item => {
-        let dy = cellArray[item.row][item.col].tile.sprite.pos.y + dt * gameOptions.fallSpeed;
-        if (dy > cellArray[item.row][item.col].tile.pos.y) {
-            dy = cellArray[item.row][item.col].tile.pos.y;
+        let dy = getSprite(item.row, item.col).pos.y + dt * gameOptions.fallSpeed;
+        if (dy > getTile(item.row, item.col).pos.y) {
+            dy = getTile(item.row, item.col).pos.y;
             onPos++;
         }
-        cellArray[item.row][item.col].tile.sprite.pos.y = dy;
-        renderEntity(cellArray[item.row][item.col].tile.sprite);
-
+        getSprite(item.row, item.col).pos.y = dy;
+        renderEntity(getSprite(item.row, item.col));
     });
     if (onPos === renderFallArray.length){
         renderStatus = 'fallComplete';
@@ -83,7 +82,7 @@ function renderEntities(list) {
     for (let i = 0; i< list.length; i++){
         let row = list[i].row;
         let col = list[i].col;
-        renderEntity(cellArray[row][col].tile.sprite);
+        renderEntity(getSprite(row, col));
     }
 }
 
@@ -92,7 +91,6 @@ function renderEntity(entity) {
 }
 
 function renderClear() {
-    cellArray = [];
     renderArray = [];
     renderDestroyArray = [];
     renderFallArray = [];
