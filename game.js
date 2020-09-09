@@ -25,7 +25,7 @@ let gameOptions = {
     fieldOffcetY: 117,
     fieldOffcetX: 20,
     swapSpeed: 200,
-    fallSpeed: 200,
+    fallSpeed: 50,
     destroySpeed: 3,
     shuffleNum: 3,
     roundTime: 60,
@@ -39,6 +39,7 @@ let renderArray = [];
 let renderDestroyArray = [];
 let renderFallArray = [];
 let move = [];
+let dt = 0;
 let canPick = false;
 let checkMove = false;
 let pickedCell;
@@ -76,6 +77,10 @@ class cell {
         if (canPick) boosters.bomb.enable ? blastTiles(boosters.bomb.blast(this.index)) : this.tile.action();
     }
 
+    draw (){
+        this.tile.draw();
+    }
+
 }
 class tile {
     constructor(pos, frame, index, state){
@@ -95,13 +100,30 @@ class tile {
     }
 
     action(){
-        canPick = false;
         poolArray = finder.scan(this.index);
         if (poolArray.length >= gameOptions.minAreaSize) {
             blastTiles(poolArray);
             checkOnSuper(this.index, poolArray);
-        } else canPick = true;
+        }
+    }
 
+    draw (){
+        if (this._state === 'base'){
+            this.sprite.render();
+        } else if (this._state === 'destroy'){
+            this.sprite.renderDestroy(this);
+        } else if (this._state === 'fall'){
+            this.sprite.renderFall(this);
+        }
+
+    }
+
+    set state(newState){
+        this._state = newState;
+    }
+
+    get state(){
+        return this._state;
     }
 
 }
@@ -119,8 +141,8 @@ class superTile extends tile {
 function checkOnSuper(index, arr) {
     if (arr.length > 6) {
         placeSuperTile(index);
-        renderDestroyArray.splice(index, 1);
-        renderArray.push(index);
+        // renderDestroyArray.splice(index, 1);
+        // renderArray.push(index);
     }
 }
 
@@ -136,11 +158,12 @@ function placeSuperTile(index) {
 
 function markDestroyTiles(arr) {
     arr.forEach((item) => {
-        renderDestroyArray.push(item);
-        deleteFromRenderArray(item);
+        // renderDestroyArray.push(item);
+        // deleteFromRenderArray(item);
         getCell(item.row, item.col).isEmpty = true;
+        getTile(item.row, item.col).state = 'destroy';
     });
-    renderStatus = 'destroy';
+    // renderStatus = 'destroy';
 }
 
 let finder = new SameColorAreasFinder();
@@ -159,17 +182,21 @@ function init() {
 }
 
 function main() {
-    let dt = timeTick();
-    update(dt);
-    render(dt);
+    setDT(timeTick());
+    update();
+    render();
     requestAnimFrame(main);
+}
+
+function setDT (value){
+    dt = value;
 }
 
 function timeTick() {
     let now = Date.now();
-    let dt = (now - lastTime) / 1000.0;
+    let result = (now - lastTime) / 1000.0;
     lastTime = now;
-    return dt;
+    return result;
 }
 
 function drawField(){
@@ -185,16 +212,16 @@ function startingFillCells() {
     for (let i = 0; i < getRawCellData().length; i++){
         for (let j = 0; j < getRawCellData()[i].length; j++){
             fillCell(getCell(i, j).pos, i, j);
-            renderArray.push({row: i, col: j});
+            // renderArray.push({row: i, col: j});
         }
     }
 }
 
-function fillCells(array) {
-    array.forEach((item) => {
-        fillCell(makePosition(item.row, item.col), item.row, item.col)
-    })
-}
+// function fillCells(array) {
+//     array.forEach((item) => {
+//         fillCell(makePosition(item.row, item.col), item.row, item.col)
+//     })
+// }
 
 function fillCell(pos, i, j, type = 'standard') {
     if (type === 'standard') getCell(i, j).tile = createStandardTile(pos, i, j);
@@ -218,13 +245,37 @@ function randomColor(){
     return Math.floor(Math.random() * Math.floor(gameOptions.blockColors-1));
 }
 
-function update(dt) {
-    doPickedCellActions();
-    doCheckMove();
-    checkState();
+function update() {
+    if (gameIsStarted){
+        doPickedCellActions();
+        doCheckMove();
+        checkState();
+        changeState();
+    }
 }
 
 function checkState() {
+    let fallCount = 0, fallCompleteCount = 0, destroyCount = 0, destroyCompleteCount = 0;
+    for (let i = 0; i < gameOptions.fieldSize; i++){
+        for (let j = 0; j < gameOptions.fieldSize; j++){
+            if (getTile(i, j).state === 'fallComplete') {
+                fallCompleteCount++;
+                getTile(i, j).state = 'base';
+            }
+            if (getTile(i, j).state === 'fall') fallCount++;
+            if (getTile(i, j).state === 'destroyComplete') destroyCompleteCount++;
+            if (getTile(i, j).state === 'destroy') destroyCount++;
+        }
+    }
+    // console.log(`destroy=${destroyCount}, destroyComplete=${destroyCompleteCount}, fall=${fallCount}, fallComplete=${fallCompleteCount}`);
+    if (destroyCount > 0) {renderStatus = 'destroy';}
+    else if (destroyCompleteCount > 0) {if (renderStatus !== 'fallComplete') renderStatus = 'destroyComplete';}
+    else if (fallCount > 0) {renderStatus = 'fall';}
+    else if (fallCompleteCount > 0) {renderStatus = 'fallComplete';}
+    // console.log(renderStatus);
+}
+
+function changeState() {
     if (renderStatus === 'destroyComplete'){
         doFall();
     } else if (renderStatus === 'fallComplete'){
@@ -236,13 +287,13 @@ function checkState() {
 }
 
 function doFall() {
-    renderStatus = 'fall';
+    // renderStatus = 'fall';
     makeTilesFall();
 }
 
 function doRefill() {
     refillField();
-    refillRenderArray();
+    // refillRenderArray();
     renderStatus = 'base';
     canPick = true;
     checkMove = true;
@@ -281,14 +332,14 @@ function holesInCol(col){
     return result;
 }
 
-function refillRenderArray() {
-    renderArray = [];
-    for (let i = 0; i < getRawCellData().length; i++){
-        for (let j = 0; j < getRawCellData()[i].length; j++){
-            renderArray.push({row: i, col: j});
-        }
-    }
-}
+// function refillRenderArray() {
+//     renderArray = [];
+//     for (let i = 0; i < getRawCellData().length; i++){
+//         for (let j = 0; j < getRawCellData()[i].length; j++){
+//             renderArray.push({row: i, col: j});
+//         }
+//     }
+// }
 
 function makeTilesFall() {
     for (let i = gameOptions.fieldSize - 2; i >= 0; i--){
@@ -296,26 +347,29 @@ function makeTilesFall() {
             if (!getCell(i, j).isEmpty){
                 let holes = holesBelow(i, j);
                 if (holes > 0){
+                    renderStatus = 'fall';
                     let item = {row: i, col: j};
-                    deleteFromRenderArray(item);
+                    // deleteFromRenderArray(item);
                     item = {row: i+holes, col: j};
                     renderFallArray.push(item);
-                    deleteFromRenderArray(item);
+                    // deleteFromRenderArray(item);
                     getCell(i, j).isEmpty = true;
                     getCell(i+holes, j).isEmpty = false;
-                    getCell((i+holes), j).tile = getCell(i,j).tile;
+                    getCell(i+holes, j).tile = getCell(i,j).tile;
+                    getTile(i+holes, j).state = 'fall';
                     getTile(i+holes, j).pos.y = getCell((i+holes), j).pos.y;
                     getTile(i+holes, j).index.row = getCell((i+holes), j).index.row;
                 }
             }
         }
     }
+    if (renderStatus === 'destroyComplete') renderStatus = 'fallComplete';
 }
 
-function deleteFromRenderArray(item) {
-    let index = renderArray.findIndex(itemRender => (item.row == itemRender.row)&&(item.col == itemRender.col));
-    if (index !== -1) renderArray.splice(index, 1);
-}
+// function deleteFromRenderArray(item) {
+//     let index = renderArray.findIndex(itemRender => (item.row == itemRender.row)&&(item.col == itemRender.col));
+//     if (index !== -1) renderArray.splice(index, 1);
+// }
 
 function holesBelow(row, col) {
     let result = 0;
