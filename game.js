@@ -73,7 +73,8 @@ class cell {
         this.tile = {};
     }
     action(){
-        if (canPick) boosters.bomb.enable ? blastTiles(this.index) : this.tile.action();
+        if (canPick) boosters.bomb.enable ? blastTiles(boosters.bomb.blast(this.index)) : this.tile.action();
+        // if (canPick) boosters.bomb.enable ? blastTiles(this.index) : this.tile.action();
     }
 
 }
@@ -98,9 +99,10 @@ class tile {
         canPick = false;
         poolArray = finder.scan(this.index);
         if (poolArray.length >= gameOptions.minAreaSize) {
-            markDestroyTiles(poolArray);
+            blastTiles(poolArray);
+            // markDestroyTiles(poolArray);
+            // score.calc(poolArray);
             checkOnSuper(this.index);
-            score.calc(poolArray);
         } else canPick = true;
 
     }
@@ -121,10 +123,12 @@ class superTile extends tile {
         this.type = 'super';
     };
     action(){
-        canPick = false;
-        poolArray = makeSuperArray(this.index);
-        markDestroyTiles(poolArray);
-        score.calc(poolArray);
+        blastTiles(makeSuperArray(this.index));
+
+        // canPick = false;
+        // poolArray = makeSuperArray(this.index);
+        // markDestroyTiles(poolArray);
+        // score.calc(poolArray);
     }
 }
 
@@ -136,11 +140,13 @@ function checkOnSuper(index) {
     }
 }
 
-function blastTiles(index) {
+function blastTiles(arr) {
     canPick = false;
-    poolArray = boosters.bomb.blast(index);
-    markDestroyTiles(poolArray);
-    score.calc(poolArray);
+    markDestroyTiles(arr);
+    score.calc(arr);
+    // poolArray = boosters.bomb.blast(index);
+    // markDestroyTiles(poolArray);
+    // score.calc(poolArray);
 }
 
 function placeSuperTile(index) {
@@ -235,13 +241,11 @@ function randomColor(){
 
 function update(dt) {
     doPickedCellActions();
-    if(checkMove){
-        canPick = false;
-        move = finder.findMove();
-        move.length > 2 ? isMoveAvailable = true: isMoveAvailable = false;
-        canPick = true;
-        checkMove = false;
-    }
+    doCheckMove();
+    renderController();
+}
+
+function renderController() {
     if (renderStatus === 'destroyComplete'){
         renderStatus = 'fall';
         makeTilesFall();
@@ -257,7 +261,16 @@ function update(dt) {
         reset();
         alert(`Поздравляем! Вы выиграли! Ваш счет: ${roundScore}`);
     }
+}
 
+function doCheckMove() {
+    if(checkMove){
+        canPick = false;
+        isMoveAvailable = finder.findMove();
+        // move.length > 2 ? isMoveAvailable = true: isMoveAvailable = false;
+        canPick = true;
+        checkMove = false;
+    }
 }
 
 function refillField(){

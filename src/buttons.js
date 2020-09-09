@@ -101,20 +101,25 @@ boosters.bomb = {
     },
     blast: function (index){
         if (this.count > 0){
-            let arr = [];
-            for (let i = -1; i < 2; i++) {
-                for (let j = -1; j < 2; j++) {
-                    if (index.row+i >= 0 && index.row+i < gameOptions.fieldSize && index.col+j >= 0 && index.col+j < gameOptions.fieldSize) {
-                        arr.push({row: index.row + i, col: index.col + j});
-                    }
-                }
-            }
             this.count--;
             this.enable = false;
-            return arr;
+            return this.makeBlastArr(index);
         }
 
+    },
+
+    makeBlastArr: function (index) {
+        let arr = [];
+        for (let i = -1; i < 2; i++) {
+            for (let j = -1; j < 2; j++) {
+                if (index.row+i >= 0 && index.row+i < gameOptions.fieldSize && index.col+j >= 0 && index.col+j < gameOptions.fieldSize) {
+                    arr.push({row: index.row + i, col: index.col + j});
+                }
+            }
+        }
+        return arr;
     }
+
 };
 
 boosters.shuffle = {

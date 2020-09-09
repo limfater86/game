@@ -9,27 +9,36 @@ function SameColorAreasFinder () {
     };
 
     this.findMove = function () {
-        let fullScan = [];
-        let arr;
+        let fullScan = createScanOrder();
+
+        while (fullScan.length > 0){
+            init(fullScan[0]);
+            doScan();
+            if (matchedBlocks.length > gameOptions.minAreaSize) return true;
+            deleteFromScan();
+            fullScan.shift();
+        }
+        return false;
+    };
+
+    function createScanOrder() {
+        let arr = [];
         for (let i = 0; i < gameOptions.fieldSize; i++) {
             for (let j = 0; j < gameOptions.fieldSize; j++){
-                fullScan.push({row: i, col: j});
+                arr.push({row: i, col: j});
             }
-        }
-        while (fullScan.length > 0){
-            arr = finder.scan(fullScan[0]);
-            if (arr.length > gameOptions.minAreaSize){
-                return arr;
-            }
-            arr.forEach((itemMatch) => {
-                let index = fullScan.findIndex((itemScan)=> (itemMatch.row == itemScan.row) && (itemMatch.col == itemScan.col));
-                if (index !== -1){
-                    fullScan.splice(index, 1);
-                }
-            });
         }
         return arr;
-    };
+    }
+
+    function deleteFromScan() {
+        matchedBlocks.forEach((itemMatch) => {
+            let index = currentScan.findIndex((itemScan)=> (itemMatch.row == itemScan.row) && (itemMatch.col == itemScan.col));
+            if (index !== -1){
+                currentScan.splice(index, 1);
+            }
+        });
+    }
 
     function init(scanBlock) {
         matchedBlocks = [];
