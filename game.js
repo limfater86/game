@@ -74,7 +74,6 @@ class cell {
     }
     action(){
         if (canPick) boosters.bomb.enable ? blastTiles(boosters.bomb.blast(this.index)) : this.tile.action();
-        // if (canPick) boosters.bomb.enable ? blastTiles(this.index) : this.tile.action();
     }
 
 }
@@ -100,19 +99,9 @@ class tile {
         poolArray = finder.scan(this.index);
         if (poolArray.length >= gameOptions.minAreaSize) {
             blastTiles(poolArray);
-            // markDestroyTiles(poolArray);
-            // score.calc(poolArray);
-            checkOnSuper(this.index);
+            checkOnSuper(this.index, poolArray);
         } else canPick = true;
 
-    }
-
-    get state (){
-        return this._state;
-    }
-
-    set state(value){
-        this._state = value;
     }
 
 }
@@ -124,16 +113,11 @@ class superTile extends tile {
     };
     action(){
         blastTiles(makeSuperArray(this.index));
-
-        // canPick = false;
-        // poolArray = makeSuperArray(this.index);
-        // markDestroyTiles(poolArray);
-        // score.calc(poolArray);
     }
 }
 
-function checkOnSuper(index) {
-    if (poolArray.length > 6) {
+function checkOnSuper(index, arr) {
+    if (arr.length > 6) {
         placeSuperTile(index);
         renderDestroyArray.splice(index, 1);
         renderArray.push(index);
@@ -144,9 +128,6 @@ function blastTiles(arr) {
     canPick = false;
     markDestroyTiles(arr);
     score.calc(arr);
-    // poolArray = boosters.bomb.blast(index);
-    // markDestroyTiles(poolArray);
-    // score.calc(poolArray);
 }
 
 function placeSuperTile(index) {
@@ -158,7 +139,6 @@ function markDestroyTiles(arr) {
         renderDestroyArray.push(item);
         deleteFromRenderArray(item);
         getCell(item.row, item.col).isEmpty = true;
-        // cellArray[item.row][item.col].isEmpty = true;
     });
     renderStatus = 'destroy';
 }
@@ -199,7 +179,6 @@ function drawField(){
             getRawCellData()[i][j] = new cell(makePosition(i, j), {row: i, col: j});
         }
     }
-    // let cells = new data(cellArray);
 }
 
 function startingFillCells() {
@@ -242,25 +221,36 @@ function randomColor(){
 function update(dt) {
     doPickedCellActions();
     doCheckMove();
-    renderController();
+    checkState();
 }
 
-function renderController() {
+function checkState() {
     if (renderStatus === 'destroyComplete'){
-        renderStatus = 'fall';
-        makeTilesFall();
+        doFall();
     } else if (renderStatus === 'fallComplete'){
-        refillField();
-        refillRenderArray();
-        renderStatus = 'base';
-        canPick = true;
-        checkMove = true;
+        doRefill();
     }
     if(score.value >= gameOptions.roundScore){
-        let roundScore = score.value;
-        reset();
-        alert(`Поздравляем! Вы выиграли! Ваш счет: ${roundScore}`);
+        gameOver(`Поздравляем! Вы выиграли! Ваш счет: ${score.value}`);
     }
+}
+
+function doFall() {
+    renderStatus = 'fall';
+    makeTilesFall();
+}
+
+function doRefill() {
+    refillField();
+    refillRenderArray();
+    renderStatus = 'base';
+    canPick = true;
+    checkMove = true;
+}
+
+function gameOver(message) {
+    reset();
+    alert(message);
 }
 
 function doCheckMove() {
@@ -345,17 +335,25 @@ function doPickedCellActions() {
 function reset() {
     // document.getElementById('game-over').style.display = 'none';
     // document.getElementById('game-over-overlay').style.display = 'none';
+    clearData();
+    clearFlags();
+    roundTimer.stop();
+    renderClear();
+}
+
+function clearFlags() {
+    canPick = false;
+    checkMove = false;
+    gameIsStarted = false;
+}
+
+function clearData() {
     score.value = 0;
     boosters.shuffle.count = 0;
     btnShuffle.count = 0;
     boosters.bomb.count = 0;
-    roundTimer.stop();
-    canPick = false;
-    checkMove = false;
-    gameIsStarted = false;
     let c =  getRawCellData();
     c = [];
-    renderClear();
 }
 
 function blockSelect(x, y) {
@@ -438,10 +436,7 @@ let roundTimer = {
         if (roundTimer.time > 0){
             roundTimer.time--;
         } else {
-            let roundScore = score.value;
-            reset();
-            alert(`Время вышло! Вы проиграли! Ваш счет: ${roundScore}`);
-            
+            gameOver(`Время вышло! Вы проиграли! Ваш счет: ${score.value}`);
         }
 
     },
