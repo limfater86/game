@@ -11,39 +11,27 @@
 
     Sprite.prototype = {
         render: function () {
-            let frameX = this.frames * this.size[0], frameY = 0;
-            let x = this.pos.x;
-            let y = this.pos.y;
             ctx.drawImage(resources.get(this.url),
-                          frameX, frameY,
-                          this.size[0], this.size[1],
-                          x, y,
-                          this.size[0]*this.scale, this.size[1]*this.scale);
+                this.frames * this.size[0], 0,
+                this.size[0], this.size[1],
+                this.pos.x, this.pos.y,
+                this.size[0]*this.scale, this.size[1]*this.scale);
         },
 
-        renderDestroy: function (tile) {
-            this.calcTransparency();
+        renderDestroy: function () {
+            this.alpha -= dt * gameOptions.destroySpeed;
+            if (this.alpha <= 0) this.alpha = 0;
             ctx.globalAlpha = this.alpha;
             this.render();
             ctx.globalAlpha = 1;
-            if (this.alpha == 0) {
-                tile.state = 'destroyComplete';
-            }
         },
 
         renderFall: function (tile) {
-            let dy = this.pos.y + dt * gameOptions.fallSpeed;
-            if(dy > tile.pos.y){
-                this.pos.y = tile.pos.y;
-                tile.state = 'fallComplete';
-            } else this.pos.y = dy;
+            this.pos.y += dt * gameOptions.fallSpeed;
+            if(this.pos.y > tile.pos.y) this.pos.y = tile.pos.y;
             this.render();
         },
 
-        calcTransparency: function() {
-            this.alpha -= dt * gameOptions.destroySpeed;
-            if(this.alpha < 0) this.alpha = 0;
-    }
 
         // get alpha() {
         //     return this._alpha;

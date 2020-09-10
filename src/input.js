@@ -13,3 +13,8 @@ function inputHandler(e){
     else if (checkCollision(e.offsetX,e.offsetY, boosters.shuffle)) {boosters.shuffle.click()}
 
 }
+
+function checkCollision(x, y, obj){
+    return x >= obj.x && x <= obj.x + obj.w*obj.scale &&
+        y >= obj.y && y <= obj.y + obj.h*obj.scale;
+}

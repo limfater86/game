@@ -14,8 +14,8 @@ let btnStart = {
             drawField();
             startingFillCells();
             roundTimer.start(gameOptions.roundTime);
-            boosters.bomb.count = 5;
-            boosters.shuffle.count = 5;
+            boosters.bomb.count = gameOptions.boosterBombCount;
+            boosters.shuffle.count = gameOptions.boosterShuffleCount;
             checkMove = true;
         }
 
@@ -36,9 +36,8 @@ let btnShuffle = {
             shuffleField();
             this.count++;
         }
-        if (this.count > 4){
-            reset();
-            alert('Нет доступных ходов! Вы проиграли!');
+        if (this.count > gameOptions.shuffleNum){
+            gameOver('Нет доступных ходов! Вы проиграли!');
         }
 
     }
@@ -66,7 +65,7 @@ let btnAddMoney2 = {
         drawText('0',this.x+65, this.y+22, 18);
     },
     click: function () {
-        console.log('pressed AddMoney Button');
+        console.log('pressed AddMoney2 Button');
     }
 };
 
@@ -140,8 +139,4 @@ boosters.shuffle = {
     }
 };
 
-function checkCollision(x, y, obj){
-    return x >= obj.x && x <= obj.x + obj.w*obj.scale &&
-        y >= obj.y && y <= obj.y + obj.h*obj.scale;
-}
 

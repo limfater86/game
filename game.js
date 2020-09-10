@@ -24,10 +24,11 @@ let gameOptions = {
     blockScale: 0.3,
     fieldOffcetY: 117,
     fieldOffcetX: 20,
-    swapSpeed: 200,
-    fallSpeed: 50,
+    fallSpeed: 150,
     destroySpeed: 3,
     shuffleNum: 3,
+    boosterBombCount: 5,
+    boosterShuffleCount: 5,
     roundTime: 60,
     roundScore: 2000
 };
@@ -78,7 +79,7 @@ class cell {
     }
 
     draw (){
-        this.tile.draw();
+        if (!this.isEmpty) this.tile.draw();
     }
 
 }
@@ -111,9 +112,13 @@ class tile {
         if (this._state === 'base'){
             this.sprite.render();
         } else if (this._state === 'destroy'){
-            this.sprite.renderDestroy(this);
+            this.sprite.renderDestroy();
+            if (this.sprite.alpha == 0) this.state = 'destroyComplete';
+        } else if (this._state === 'destroyComplete'){
+            getCell(this.index.row, this.index.col).isEmpty = true;
         } else if (this._state === 'fall'){
             this.sprite.renderFall(this);
+            if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
         }
 
     }
@@ -160,7 +165,7 @@ function markDestroyTiles(arr) {
     arr.forEach((item) => {
         // renderDestroyArray.push(item);
         // deleteFromRenderArray(item);
-        getCell(item.row, item.col).isEmpty = true;
+        // getCell(item.row, item.col).isEmpty = true;
         getTile(item.row, item.col).state = 'destroy';
     });
     // renderStatus = 'destroy';
@@ -351,7 +356,7 @@ function makeTilesFall() {
                     let item = {row: i, col: j};
                     // deleteFromRenderArray(item);
                     item = {row: i+holes, col: j};
-                    renderFallArray.push(item);
+                    // renderFallArray.push(item);
                     // deleteFromRenderArray(item);
                     getCell(i, j).isEmpty = true;
                     getCell(i+holes, j).isEmpty = false;
