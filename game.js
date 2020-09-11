@@ -24,8 +24,8 @@ let gameOptions = {
     blockScale: 0.3,
     fieldOffcetY: 117,
     fieldOffcetX: 20,
-    fallSpeed: 150,
-    destroySpeed: 3,
+    fallSpeed: 100,
+    destroySpeed: 2,
     shuffleNum: 3,
     boosterBombCount: 5,
     boosterShuffleCount: 5,
@@ -36,9 +36,7 @@ let gameOptions = {
 let lastTime;
 let poolArray = [];
 let renderStatus = 'base';
-let renderArray = [];
-let renderDestroyArray = [];
-let renderFallArray = [];
+let needUpdateArray = [];
 let move = [];
 let dt = 0;
 let canPick = false;
@@ -46,6 +44,7 @@ let checkMove = false;
 let pickedCell;
 let isMoveAvailable = false;
 let gameIsStarted = false;
+let blastFlag = false;
 
 resources.load([
     'assets/Background.png',
@@ -75,7 +74,10 @@ class cell {
         this.tile = {};
     }
     action(){
-        if (canPick) boosters.bomb.enable ? blastTiles(boosters.bomb.blast(this.index)) : this.tile.action();
+        if (boosters.bomb.enable){
+            poolArray = boosters.bomb.blast(this.index);
+            blastTiles(poolArray);
+        } else this.tile.action();
     }
 
     draw (){
@@ -104,7 +106,7 @@ class tile {
         poolArray = finder.scan(this.index);
         if (poolArray.length >= gameOptions.minAreaSize) {
             blastTiles(poolArray);
-            checkOnSuper(this.index, poolArray);
+            if (checkOnSuper(this.index, poolArray)) deleteFromArr(this.index, poolArray);
         }
     }
 
@@ -113,14 +115,27 @@ class tile {
             this.sprite.render();
         } else if (this._state === 'destroy'){
             this.sprite.renderDestroy();
-            if (this.sprite.alpha == 0) this.state = 'destroyComplete';
+            // if (this.sprite.alpha == 0) this.state = 'destroyComplete';
         } else if (this._state === 'destroyComplete'){
-            getCell(this.index.row, this.index.col).isEmpty = true;
+            // getCell(this.index.row, this.index.col).isEmpty = true;
         } else if (this._state === 'fall'){
             this.sprite.renderFall(this);
-            if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
+            // if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
         }
 
+    }
+
+    update(){
+        // if (this._state === 'base'){
+        //
+        // } else
+        // if (this._state === 'destroy'){
+        //     if (this.sprite.alpha == 0) this.state = 'destroyComplete';
+        // } else if (this._state === 'destroyComplete'){
+        //     getCell(this.index.row, this.index.col).isEmpty = true;
+        // } else if (this._state === 'fall'){
+        //     if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
+        // }
     }
 
     set state(newState){
@@ -139,21 +154,28 @@ class superTile extends tile {
         this.type = 'super';
     };
     action(){
-        blastTiles(makeSuperArray(this.index));
+        poolArray = makeSuperArray(this.index);
+        blastTiles(poolArray);
+    }
+}
+
+function deleteFromArr(index, arr) {
+    let tile = arr.findIndex((itemScan)=> (index.row == itemScan.row) && (index.col == itemScan.col));
+    if (tile !== -1){
+        arr.splice(tile, 1);
     }
 }
 
 function checkOnSuper(index, arr) {
     if (arr.length > 6) {
         placeSuperTile(index);
-        // renderDestroyArray.splice(index, 1);
-        // renderArray.push(index);
+        return true;
     }
 }
 
 function blastTiles(arr) {
     canPick = false;
-    markDestroyTiles(arr);
+    blastFlag = true;
     score.calc(arr);
 }
 
@@ -161,14 +183,10 @@ function placeSuperTile(index) {
     fillCell(makePosition(index.row, index.col), index.row, index.col, 'super');
 }
 
-function markDestroyTiles(arr) {
+function markTiles(arr, state) {
     arr.forEach((item) => {
-        // renderDestroyArray.push(item);
-        // deleteFromRenderArray(item);
-        // getCell(item.row, item.col).isEmpty = true;
-        getTile(item.row, item.col).state = 'destroy';
+        getTile(item.row, item.col).state = state;
     });
-    // renderStatus = 'destroy';
 }
 
 let finder = new SameColorAreasFinder();
@@ -217,7 +235,6 @@ function startingFillCells() {
     for (let i = 0; i < getRawCellData().length; i++){
         for (let j = 0; j < getRawCellData()[i].length; j++){
             fillCell(getCell(i, j).pos, i, j);
-            // renderArray.push({row: i, col: j});
         }
     }
 }
@@ -252,54 +269,98 @@ function randomColor(){
 
 function update() {
     if (gameIsStarted){
-        doPickedCellActions();
-        doCheckMove();
-        checkState();
-        changeState();
+        if (pickedCell) doPickedCellActions();
+        if (checkMove) findMove();
+        tilesStateController();
+        checkWin();
     }
+}
+
+function tilesStateController() {
+    if (poolArray.length > 0){
+        let state = checkState();
+        if (state === 'base' && blastFlag) {
+            blastFlag = false;
+            markTiles(poolArray, 'destroy');
+        }
+        else if (state === 'destroy') updateTiles(poolArray);
+        else if (state === 'destroyComplete') {
+            updateTiles(poolArray);
+            if (makeTilesFall() === 0) markTiles(poolArray, 'fallComplete');
+        }
+        else if (state === 'fall') updateTiles(poolArray);
+        else if (state === 'fallComplete'){
+            markTiles(poolArray, 'base');
+            doRefill();
+            poolArray = [];
+        }
+    }
+}
+
+function updateTiles(arr) {
+
+    arr.forEach((item)=> {
+        if (getTile(item.row, item.col).state === 'destroy'){
+            if (getSprite(item.row, item.col).alpha == 0) getTile(item.row, item.col).state = 'destroyComplete';
+        } else if (getTile(item.row, item.col).state === 'destroyComplete'){
+            getCell(item.row, item.col).isEmpty = true;
+        } else if (getTile(item.row, item.col).state === 'fall'){
+            if (getSprite(item.row, item.col).pos.y == getTile(item.row, item.col).pos.y) getTile(item.row, item.col).state = 'fallComplete';
+        }
+
+       // getTile(item.row, item.col).update();
+    });
 }
 
 function checkState() {
     let fallCount = 0, fallCompleteCount = 0, destroyCount = 0, destroyCompleteCount = 0;
-    for (let i = 0; i < gameOptions.fieldSize; i++){
-        for (let j = 0; j < gameOptions.fieldSize; j++){
-            if (getTile(i, j).state === 'fallComplete') {
-                fallCompleteCount++;
-                getTile(i, j).state = 'base';
-            }
-            if (getTile(i, j).state === 'fall') fallCount++;
-            if (getTile(i, j).state === 'destroyComplete') destroyCompleteCount++;
-            if (getTile(i, j).state === 'destroy') destroyCount++;
-        }
-    }
-    // console.log(`destroy=${destroyCount}, destroyComplete=${destroyCompleteCount}, fall=${fallCount}, fallComplete=${fallCompleteCount}`);
-    if (destroyCount > 0) {renderStatus = 'destroy';}
-    else if (destroyCompleteCount > 0) {if (renderStatus !== 'fallComplete') renderStatus = 'destroyComplete';}
-    else if (fallCount > 0) {renderStatus = 'fall';}
-    else if (fallCompleteCount > 0) {renderStatus = 'fallComplete';}
+    poolArray.forEach((item)=>{
+        if (getTile(item.row, item.col).state === 'fallComplete') fallCompleteCount++;
+        if (getTile(item.row, item.col).state === 'fall') fallCount++;
+        if (getTile(item.row, item.col).state === 'destroyComplete') destroyCompleteCount++;
+        if (getTile(item.row, item.col).state === 'destroy') destroyCount++;
+    });
+    if (destroyCount > 0) return 'destroy';
+    else if (destroyCompleteCount > 0) return 'destroyComplete';
+    else if (fallCount > 0) return 'fall';
+    else if (fallCompleteCount > 0) return 'fallComplete';
+    else return 'base';
+
+
+    // let fallCount = 0, fallCompleteCount = 0, destroyCount = 0, destroyCompleteCount = 0;
+    // for (let i = 0; i < gameOptions.fieldSize; i++){
+    //     for (let j = 0; j < gameOptions.fieldSize; j++){
+    //         if (getTile(i, j).state === 'fallComplete') {
+    //             fallCompleteCount++;
+    //             getTile(i, j).state = 'base';
+    //         }
+    //         if (getTile(i, j).state === 'fall') fallCount++;
+    //         if (getTile(i, j).state === 'destroyComplete') destroyCompleteCount++;
+    //         if (getTile(i, j).state === 'destroy') destroyCount++;
+    //     }
+    // }
+    // // console.log(`destroy=${destroyCount}, destroyComplete=${destroyCompleteCount}, fall=${fallCount}, fallComplete=${fallCompleteCount}`);
+    // if (destroyCount > 0) {renderStatus = 'destroy';}
+    // else if (destroyCompleteCount > 0) {if (renderStatus !== 'fallComplete') renderStatus = 'destroyComplete';}
+    // else if (fallCount > 0) {renderStatus = 'fall';}
+    // else if (fallCompleteCount > 0) {renderStatus = 'fallComplete';}
     // console.log(renderStatus);
+
+
 }
 
-function changeState() {
-    if (renderStatus === 'destroyComplete'){
-        doFall();
-    } else if (renderStatus === 'fallComplete'){
-        doRefill();
-    }
+function  checkWin() {
     if(score.value >= gameOptions.roundScore){
         gameOver(`Поздравляем! Вы выиграли! Ваш счет: ${score.value}`);
     }
 }
 
 function doFall() {
-    // renderStatus = 'fall';
     makeTilesFall();
 }
 
 function doRefill() {
     refillField();
-    // refillRenderArray();
-    renderStatus = 'base';
     canPick = true;
     checkMove = true;
 }
@@ -309,14 +370,12 @@ function gameOver(message) {
     alert(message);
 }
 
-function doCheckMove() {
-    if(checkMove){
-        canPick = false;
-        isMoveAvailable = finder.findMove();
-        // move.length > 2 ? isMoveAvailable = true: isMoveAvailable = false;
-        canPick = true;
-        checkMove = false;
-    }
+function findMove() {
+    canPick = false;
+    isMoveAvailable = finder.findMove();
+    // move.length > 2 ? isMoveAvailable = true: isMoveAvailable = false;
+    canPick = true;
+    checkMove = false;
 }
 
 function refillField(){
@@ -337,27 +396,18 @@ function holesInCol(col){
     return result;
 }
 
-// function refillRenderArray() {
-//     renderArray = [];
-//     for (let i = 0; i < getRawCellData().length; i++){
-//         for (let j = 0; j < getRawCellData()[i].length; j++){
-//             renderArray.push({row: i, col: j});
-//         }
-//     }
-// }
-
 function makeTilesFall() {
+    let fallCount = 0;
     for (let i = gameOptions.fieldSize - 2; i >= 0; i--){
         for (let j = 0; j < gameOptions.fieldSize; j++){
             if (!getCell(i, j).isEmpty){
                 let holes = holesBelow(i, j);
                 if (holes > 0){
-                    renderStatus = 'fall';
+                    fallCount++;
                     let item = {row: i, col: j};
-                    // deleteFromRenderArray(item);
+                    poolArray.push(item);
                     item = {row: i+holes, col: j};
-                    // renderFallArray.push(item);
-                    // deleteFromRenderArray(item);
+                    poolArray.push(item);
                     getCell(i, j).isEmpty = true;
                     getCell(i+holes, j).isEmpty = false;
                     getCell(i+holes, j).tile = getCell(i,j).tile;
@@ -368,13 +418,8 @@ function makeTilesFall() {
             }
         }
     }
-    if (renderStatus === 'destroyComplete') renderStatus = 'fallComplete';
+    return fallCount;
 }
-
-// function deleteFromRenderArray(item) {
-//     let index = renderArray.findIndex(itemRender => (item.row == itemRender.row)&&(item.col == itemRender.col));
-//     if (index !== -1) renderArray.splice(index, 1);
-// }
 
 function holesBelow(row, col) {
     let result = 0;
@@ -385,10 +430,8 @@ function holesBelow(row, col) {
 }
 
 function doPickedCellActions() {
-    if (pickedCell){
-        getCell(pickedCell.row, pickedCell.col).action();
-        pickedCell = 0;
-    }
+    getCell(pickedCell.row, pickedCell.col).action();
+    pickedCell = 0;
 }
 
 function reset() {
@@ -397,7 +440,6 @@ function reset() {
     clearData();
     clearFlags();
     roundTimer.stop();
-    renderClear();
 }
 
 function clearFlags() {
@@ -416,13 +458,14 @@ function clearData() {
 }
 
 function blockSelect(x, y) {
-    let check = blockCheck(coordToIndex(x, y));
-    if (check === -1) {
-        pickedCell = 0;
-    } else {
-        pickedCell = check;
+    if (canPick) {
+        let check = blockCheck(coordToIndex(x, y));
+        if (check === -1) {
+            pickedCell = 0;
+        } else {
+            pickedCell = check;
+        }
     }
-
 }
 function coordToIndex(x, y) {
     let row = Math.floor((y - gameOptions.fieldOffcetY - gameOptions.blockHeight * gameOptions.blockScale/2) / (gameOptions.blockHeight * gameOptions.blockScale));
