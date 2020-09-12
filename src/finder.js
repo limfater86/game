@@ -32,8 +32,8 @@ function SameColorAreasFinder () {
     }
 
     function deleteFromScan() {
-        matchedBlocks.forEach((itemMatch) => {
-            let index = currentScan.findIndex((itemScan)=> (itemMatch.row == itemScan.row) && (itemMatch.col == itemScan.col));
+        matchedBlocks.forEach((tile) => {
+            let index = currentScan.findIndex((itemScan)=> (tile.index.row == itemScan.row) && (tile.index.col == itemScan.col));
             if (index !== -1){
                 currentScan.splice(index, 1);
             }
@@ -45,39 +45,37 @@ function SameColorAreasFinder () {
         scannedBlocks = [];
         currentScan = [];
         currentScan.push(scanBlock);
-        matchedBlocks.push(scanBlock);
+        matchedBlocks.push(getTile(scanBlock.row, scanBlock.col));
         scannedBlocks.push(scanBlock);
     }
     function doScan() {
         while (currentScan.length){
-            blockScan(currentScan[0]);
+            tileScan(currentScan[0]);
             currentScan.shift();
         }
     }
-    function blockScan (scanBlock){
-        let nearbyBlock = {};
+    function tileScan (scanTile){
         for (let i = -1; i < 2; i++){
-            if (i == 0){
-                for (let j = -1; j < 2; j+=2){
-                    nearbyBlock = {row: scanBlock.row, col: scanBlock.col + j};
-                    nearbyBlockCheck(nearbyBlock, scanBlock);
+            for (let j = -1; j < 2; j++){
+                if ( Math.abs(i) != Math.abs(j) ){
+                    let row = scanTile.row + i, col = scanTile.col + j;
+                    if (isTileInField({row: row, col: col}) !== -1) {
+                        nearbyBlockCheck(getTile(row, col), getTile(scanTile.row, scanTile.col));
+                    }
                 }
-            } else {
-                nearbyBlock = {row: scanBlock.row + i, col: scanBlock.col};
-                nearbyBlockCheck(nearbyBlock, scanBlock);
             }
         }
+
     }
-    function nearbyBlockCheck (nearBlock, scanBlock){
-        let include = scannedBlocks.findIndex((item)=> (item.row == nearBlock.row) && (item.col == nearBlock.col));
+
+    function nearbyBlockCheck (nearTile, scanTile){
+        let include = scannedBlocks.findIndex((item)=> (item.row == nearTile.index.row) && (item.col == nearTile.index.col));
         if (include === -1){
-            if (nearBlock.row >= 0 && nearBlock.row < gameOptions.fieldSize && nearBlock.col >= 0 && nearBlock.col < gameOptions.fieldSize) {
-                if (getSprite(nearBlock.row, nearBlock.col).frames === getSprite(scanBlock.row, scanBlock.col).frames){
-                    matchedBlocks.push(nearBlock);
-                    currentScan.push(nearBlock);
-                }
-                scannedBlocks.push(nearBlock);
+            if (nearTile.sprite.frames === scanTile.sprite.frames){
+                matchedBlocks.push(nearTile);
+                currentScan.push(nearTile.index);
             }
+            scannedBlocks.push(nearTile.index);
         }
     }
 }

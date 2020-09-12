@@ -24,7 +24,7 @@ let gameOptions = {
     blockScale: 0.3,
     fieldOffcetY: 117,
     fieldOffcetX: 20,
-    fallSpeed: 100,
+    fallSpeed: 150,
     destroySpeed: 2,
     shuffleNum: 3,
     boosterBombCount: 5,
@@ -35,8 +35,6 @@ let gameOptions = {
 
 let lastTime;
 let poolArray = [];
-let renderStatus = 'base';
-let needUpdateArray = [];
 let move = [];
 let dt = 0;
 let canPick = false;
@@ -45,6 +43,7 @@ let pickedCell;
 let isMoveAvailable = false;
 let gameIsStarted = false;
 let blastFlag = false;
+let cellIsPicked = false;
 
 resources.load([
     'assets/Background.png',
@@ -77,7 +76,7 @@ class cell {
         if (boosters.bomb.enable){
             poolArray = boosters.bomb.blast(this.index);
             blastTiles(poolArray);
-        } else this.tile.action();
+        } else this.tile.action(this);
     }
 
     draw (){
@@ -102,30 +101,26 @@ class tile {
         this.sprite = new Sprite(spriteAttr)
     }
 
-    action(){
+    action(cell){
         poolArray = finder.scan(this.index);
         if (poolArray.length >= gameOptions.minAreaSize) {
             blastTiles(poolArray);
-            if (checkOnSuper(this.index, poolArray)) deleteFromArr(this.index, poolArray);
+            if (checkOnSuper(cell, poolArray)) deleteFromArr(this, poolArray);
         }
     }
 
     draw (){
-        if (this._state === 'base'){
+        if ((this._state === 'base') || (this._state === 'fallComplete')){
             this.sprite.render();
-        } else if (this._state === 'destroy'){
+        } else if ((this._state === 'destroy') || (this._state === 'destroyComplete')){
             this.sprite.renderDestroy();
-            // if (this.sprite.alpha == 0) this.state = 'destroyComplete';
-        } else if (this._state === 'destroyComplete'){
-            // getCell(this.index.row, this.index.col).isEmpty = true;
         } else if (this._state === 'fall'){
             this.sprite.renderFall(this);
-            // if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
         }
 
     }
 
-    update(){
+    // update(){
         // if (this._state === 'base'){
         //
         // } else
@@ -136,7 +131,7 @@ class tile {
         // } else if (this._state === 'fall'){
         //     if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
         // }
-    }
+    // }
 
     set state(newState){
         this._state = newState;
@@ -159,16 +154,16 @@ class superTile extends tile {
     }
 }
 
-function deleteFromArr(index, arr) {
-    let tile = arr.findIndex((itemScan)=> (index.row == itemScan.row) && (index.col == itemScan.col));
-    if (tile !== -1){
-        arr.splice(tile, 1);
+function deleteFromArr(tile, arr) {
+    let index = arr.findIndex((itemScan)=> (tile.index.row == itemScan.index.row) && (tile.index.col == itemScan.index.col));
+    if (index !== -1){
+        arr.splice(index, 1);
     }
 }
 
-function checkOnSuper(index, arr) {
+function checkOnSuper(cell, arr) {
     if (arr.length > 6) {
-        placeSuperTile(index);
+        placeSuperTile(cell);
         return true;
     }
 }
@@ -179,13 +174,13 @@ function blastTiles(arr) {
     score.calc(arr);
 }
 
-function placeSuperTile(index) {
-    fillCell(makePosition(index.row, index.col), index.row, index.col, 'super');
+function placeSuperTile(cell) {
+    fillCell(cell, 'super');
 }
 
 function markTiles(arr, state) {
     arr.forEach((item) => {
-        getTile(item.row, item.col).state = state;
+        item.state = state;
     });
 }
 
@@ -194,7 +189,7 @@ let finder = new SameColorAreasFinder();
 function makeSuperArray(index){
     let arr = [];
     for (let i = 0; i < gameOptions.fieldSize; i++){
-        arr.push({row: index.row, col: i});
+        arr.push(getTile(index.row, i));
     }
     return arr;
 }
@@ -234,29 +229,23 @@ function drawField(){
 function startingFillCells() {
     for (let i = 0; i < getRawCellData().length; i++){
         for (let j = 0; j < getRawCellData()[i].length; j++){
-            fillCell(getCell(i, j).pos, i, j);
+            fillCell(getCell(i, j));
         }
     }
 }
 
-// function fillCells(array) {
-//     array.forEach((item) => {
-//         fillCell(makePosition(item.row, item.col), item.row, item.col)
-//     })
-// }
-
-function fillCell(pos, i, j, type = 'standard') {
-    if (type === 'standard') getCell(i, j).tile = createStandardTile(pos, i, j);
-    else getCell(i, j).tile = createSuperTile(pos, i, j);
-    getCell(i, j).isEmpty = false;
+function fillCell(cell, type = 'standard') {
+    if (type === 'standard') cell.tile = createStandardTile(cell);
+    else cell.tile = createSuperTile(cell);
+    cell.isEmpty = false;
 }
 
-function createStandardTile(pos, i,j, state){
-    return new tile(pos, randomColor(), {row: i, col: j}, (state || 'base'));
+function createStandardTile(cell){
+    return new tile({x: cell.pos.x, y: cell.pos.y}, randomColor(), {row: cell.index.row, col: cell.index.col}, 'base');
 }
 
-function createSuperTile(pos, i,j, state) {
-    return new superTile(pos, gameOptions.blockColors, {row: i, col: j}, (state ||'base'));
+function createSuperTile(cell) {
+    return new superTile({x: cell.pos.x, y: cell.pos.y}, gameOptions.blockColors, {row: cell.index.row, col: cell.index.col}, 'base');
 }
 
 function makePosition(i, j) {
@@ -269,7 +258,7 @@ function randomColor(){
 
 function update() {
     if (gameIsStarted){
-        if (pickedCell) doPickedCellActions();
+        if (cellIsPicked) doPickedCellActions();
         if (checkMove) findMove();
         tilesStateController();
         checkWin();
@@ -288,8 +277,14 @@ function tilesStateController() {
             updateTiles(poolArray);
             if (makeTilesFall() === 0) markTiles(poolArray, 'fallComplete');
         }
-        else if (state === 'fall') updateTiles(poolArray);
+        else if (state === 'fall'){
+            updateTiles(poolArray);
+            console.log('state controller - fall');
+        }
+
         else if (state === 'fallComplete'){
+            console.log('state controller - fall Complete');
+            console.log(_cellArray);
             markTiles(poolArray, 'base');
             doRefill();
             poolArray = [];
@@ -299,64 +294,37 @@ function tilesStateController() {
 
 function updateTiles(arr) {
 
-    arr.forEach((item)=> {
-        if (getTile(item.row, item.col).state === 'destroy'){
-            if (getSprite(item.row, item.col).alpha == 0) getTile(item.row, item.col).state = 'destroyComplete';
-        } else if (getTile(item.row, item.col).state === 'destroyComplete'){
-            getCell(item.row, item.col).isEmpty = true;
-        } else if (getTile(item.row, item.col).state === 'fall'){
-            if (getSprite(item.row, item.col).pos.y == getTile(item.row, item.col).pos.y) getTile(item.row, item.col).state = 'fallComplete';
+    arr.forEach((tile)=> {
+        if (tile.state === 'destroy'){
+            if (tile.sprite.alpha == 0) tile.state = 'destroyComplete';
+        } else if (tile.state === 'destroyComplete'){
+            getCell(tile.index.row, tile.index.col).isEmpty = true;
+        } else if (tile.state === 'fall'){
+                if (tile.sprite.pos.y == tile.pos.y) tile.state = 'fallComplete';
         }
 
-       // getTile(item.row, item.col).update();
     });
 }
 
 function checkState() {
     let fallCount = 0, fallCompleteCount = 0, destroyCount = 0, destroyCompleteCount = 0;
-    poolArray.forEach((item)=>{
-        if (getTile(item.row, item.col).state === 'fallComplete') fallCompleteCount++;
-        if (getTile(item.row, item.col).state === 'fall') fallCount++;
-        if (getTile(item.row, item.col).state === 'destroyComplete') destroyCompleteCount++;
-        if (getTile(item.row, item.col).state === 'destroy') destroyCount++;
+    poolArray.forEach((tile)=>{
+        if (tile.state === 'fallComplete') fallCompleteCount++;
+        if (tile.state === 'fall') fallCount++;
+        if (tile.state === 'destroyComplete') destroyCompleteCount++;
+        if (tile.state === 'destroy') destroyCount++;
     });
     if (destroyCount > 0) return 'destroy';
     else if (destroyCompleteCount > 0) return 'destroyComplete';
     else if (fallCount > 0) return 'fall';
     else if (fallCompleteCount > 0) return 'fallComplete';
     else return 'base';
-
-
-    // let fallCount = 0, fallCompleteCount = 0, destroyCount = 0, destroyCompleteCount = 0;
-    // for (let i = 0; i < gameOptions.fieldSize; i++){
-    //     for (let j = 0; j < gameOptions.fieldSize; j++){
-    //         if (getTile(i, j).state === 'fallComplete') {
-    //             fallCompleteCount++;
-    //             getTile(i, j).state = 'base';
-    //         }
-    //         if (getTile(i, j).state === 'fall') fallCount++;
-    //         if (getTile(i, j).state === 'destroyComplete') destroyCompleteCount++;
-    //         if (getTile(i, j).state === 'destroy') destroyCount++;
-    //     }
-    // }
-    // // console.log(`destroy=${destroyCount}, destroyComplete=${destroyCompleteCount}, fall=${fallCount}, fallComplete=${fallCompleteCount}`);
-    // if (destroyCount > 0) {renderStatus = 'destroy';}
-    // else if (destroyCompleteCount > 0) {if (renderStatus !== 'fallComplete') renderStatus = 'destroyComplete';}
-    // else if (fallCount > 0) {renderStatus = 'fall';}
-    // else if (fallCompleteCount > 0) {renderStatus = 'fallComplete';}
-    // console.log(renderStatus);
-
-
 }
 
-function  checkWin() {
+function checkWin() {
     if(score.value >= gameOptions.roundScore){
         gameOver(`Поздравляем! Вы выиграли! Ваш счет: ${score.value}`);
     }
-}
-
-function doFall() {
-    makeTilesFall();
 }
 
 function doRefill() {
@@ -383,7 +351,7 @@ function refillField(){
         let emptyBlocks = holesInCol(j);
         if(emptyBlocks > 0){
             for (let i = 0; i < emptyBlocks; i++){
-                fillCell(getCell(i, j).pos, i, j);
+                fillCell(getCell(i, j));
             }
         }
     }
@@ -398,19 +366,17 @@ function holesInCol(col){
 
 function makeTilesFall() {
     let fallCount = 0;
+    poolArray = [];
     for (let i = gameOptions.fieldSize - 2; i >= 0; i--){
         for (let j = 0; j < gameOptions.fieldSize; j++){
             if (!getCell(i, j).isEmpty){
                 let holes = holesBelow(i, j);
                 if (holes > 0){
                     fallCount++;
-                    let item = {row: i, col: j};
-                    poolArray.push(item);
-                    item = {row: i+holes, col: j};
-                    poolArray.push(item);
+                    getCell(i+holes, j).tile = getCell(i,j).tile;
                     getCell(i, j).isEmpty = true;
                     getCell(i+holes, j).isEmpty = false;
-                    getCell(i+holes, j).tile = getCell(i,j).tile;
+                    poolArray.push(getTile(i+holes, j));
                     getTile(i+holes, j).state = 'fall';
                     getTile(i+holes, j).pos.y = getCell((i+holes), j).pos.y;
                     getTile(i+holes, j).index.row = getCell((i+holes), j).index.row;
@@ -430,8 +396,9 @@ function holesBelow(row, col) {
 }
 
 function doPickedCellActions() {
-    getCell(pickedCell.row, pickedCell.col).action();
-    pickedCell = 0;
+    cellIsPicked = false;
+    pickedCell.action();
+    pickedCell = {};
 }
 
 function reset() {
@@ -459,11 +426,13 @@ function clearData() {
 
 function blockSelect(x, y) {
     if (canPick) {
-        let check = blockCheck(coordToIndex(x, y));
+        let check = isTileInField(coordToIndex(x, y));
         if (check === -1) {
             pickedCell = 0;
         } else {
-            pickedCell = check;
+            // pickedCell = check;
+            cellIsPicked = true;
+            pickedCell = getCell(check.row, check.col);
         }
     }
 }
@@ -472,7 +441,7 @@ function coordToIndex(x, y) {
     let col = Math.floor((x - gameOptions.fieldOffcetX - gameOptions.blockWidth * gameOptions.blockScale/2) / (gameOptions.blockWidth * gameOptions.blockScale));
     return {row, col}
 }
-function blockCheck(index){
+function isTileInField(index){
     if(index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize){
         return -1;
     }
