@@ -1,6 +1,12 @@
+import {ctx} from "./frame";
+import {flags} from "./game";
+import {getRawCellData, getCell} from "./data";
+import {progressbar, staticImages} from "./interface";
+import {boosters, btnAddMoney2, btnStart, btnAddMoney, btnShuffle,} from "./buttons";
+
 function render() {
     renderInterface();
-    if (gameIsStarted) renderCells();
+    if (flags.gameIsStarted) renderCells();
 }
 
 function renderCells() {
@@ -33,7 +39,5 @@ function drawText(text, x, y, size) {
     ctx.fillText(text, x, y);
 }
 
+export {drawText, render}
 
-// function renderClear() {
-//     renderStatus = 'base';
-// }

@@ -1,3 +1,10 @@
+import {gameOptions, drawField, flags, shuffleField, startingFillCells, gameOver} from "./game";
+import {drawText} from "./render";
+import {ctx} from "./frame";
+import {getRawCellData, getTile} from "./data";
+import {isTileInField} from "./finder";
+import {roundTimer} from "./interface";
+
 let btnStart = {
     x: 470, y: 530,
     w: 367, h: 157,
@@ -7,16 +14,16 @@ let btnStart = {
         drawText('СТАРТ',this.x+55, this.y+32, 20);
     },
     click: function () {
-        if (!gameIsStarted){
-            gameIsStarted = true;
+        if (!flags.gameIsStarted){
+            flags.gameIsStarted = true;
             console.log('pressed Start Button');
-            canPick = true;
+            flags.canPick = true;
             drawField();
             startingFillCells();
             roundTimer.start(gameOptions.roundTime);
             boosters.bomb.count = gameOptions.boosterBombCount;
             boosters.shuffle.count = gameOptions.boosterShuffleCount;
-            checkMove = true;
+            flags.checkMove = true;
         }
 
     }
@@ -32,7 +39,7 @@ let btnShuffle = {
         drawText('ПЕРЕМЕШАТЬ',this.x+75, this.y+32, 18);
     },
     click: function () {
-        if (!isMoveAvailable){
+        if (!flags.isMoveAvailable){
             shuffleField();
             this.count++;
         }
@@ -111,7 +118,7 @@ boosters.bomb = {
         let arr = [];
         for (let i = -1; i < 2; i++) {
             for (let j = -1; j < 2; j++) {
-                if (isTileInField(index.row+i,index.col+j) !== -1) {
+                if (isTileInField({row: index.row + i, col: index.col + j})) {
                     arr.push(getTile(index.row + i, index.col + j));
                 }
             }
@@ -139,4 +146,10 @@ boosters.shuffle = {
     }
 };
 
-
+export {
+    btnShuffle,
+    btnAddMoney,
+    btnStart,
+    btnAddMoney2,
+    boosters
+}

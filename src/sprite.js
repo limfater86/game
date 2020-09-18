@@ -1,3 +1,5 @@
+import {ctx} from "./frame";
+import {gameOptions, dt} from "./game";
 
 (function() {
     function Sprite(attr) {
@@ -32,35 +34,6 @@
             this.render();
         },
 
-
-        // get alpha() {
-        //     return this._alpha;
-        // },
-        //
-        // set alpha(value) {
-        //     this._alpha = value;
-        // },
-
-        // render: function(ctx) {
-        //     var frame;
-        //     frame = this.frames;
-        //
-        //     let x = this.pos.x;
-        //     let y = this.pos.y;
-        //     let frameX=0, frameY=0;
-        //
-        //     if(this.dir == 'vertical') {
-        //         frameY += frame * this.size[1];
-        //     }
-        //     else {
-        //         frameX += frame * this.size[0];
-        //     }
-        //     ctx.drawImage(resources.get(this.url),
-        //                   frameX, frameY,
-        //                   this.size[0], this.size[1],
-        //                   x, y,
-        //                   this.size[0]*this.scale, this.size[1]*this.scale);
-        // }
     };
 
     window.Sprite = Sprite;

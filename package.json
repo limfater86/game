@@ -1,0 +1,38 @@
+{
+  "name": "game",
+  "version": "1.0.0",
+  "description": "test game blast mechanics",
+  "private": true,
+  "main": "./main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "start": "webpack-dev-server --mode development --open"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/limfater86/game.git"
+  },
+  "keywords": [
+    "js",
+    "canvas"
+  ],
+  "author": "Limfater86 <permds@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/limfater86/game/issues"
+  },
+  "homepage": "https://github.com/limfater86/game#readme",
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^6.1.0",
+    "css-loader": "^4.3.0",
+    "html-webpack-plugin": "^4.4.1",
+    "style-loader": "^1.2.1",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  }
+}

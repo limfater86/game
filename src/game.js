@@ -1,19 +1,17 @@
-var requestAnimFrame = (function(){
-    return window.requestAnimationFrame       ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame    ||
-        window.oRequestAnimationFrame      ||
-        window.msRequestAnimationFrame     ||
-        function(callback){
-            window.setTimeout(callback, 1000 / 60);
-        };
-})();
-
-let canvas = document.createElement("canvas");
-let ctx = canvas.getContext("2d");
-canvas.width = 800;
-canvas.height = 600;
-document.body.appendChild(canvas);
+import './sprite'
+import {boosters, btnShuffle} from "./buttons";
+import './resources'
+// import Cell from "./cell";
+// import {Tile, SuperTile} from "./tile";
+import {render} from "./render";
+import {getCell, getTile, getRawCellData, getSprite} from "./data";
+import {isTileInField, SameColorAreasFinder} from "./finder";
+import {
+    // timeTick,
+    requestAnimFrame,
+} from './frame';
+import {inputHandler} from "./input";
+import {score, roundTimer} from "./interface";
 
 let gameOptions = {
     fieldSize: 7,
@@ -22,69 +20,29 @@ let gameOptions = {
     blockHeight: 192,
     blockWidth: 170,
     blockScale: 0.3,
-    fieldOffcetY: 117,
-    fieldOffcetX: 20,
-    fallSpeed: 150,
-    destroySpeed: 2,
+    fieldOffsetY: 117,
+    fieldOffsetX: 20,
+    fallSpeed: 500,
+    destroySpeed: 4,
     shuffleNum: 3,
     boosterBombCount: 5,
     boosterShuffleCount: 5,
-    roundTime: 60,
+    roundTime: 600,
     roundScore: 2000
 };
 
-let lastTime;
+let dt = 0, lastTime = 0;
 let poolArray = [];
 let move = [];
-let dt = 0;
-let canPick = false;
-let checkMove = false;
 let pickedCell;
-let isMoveAvailable = false;
-let gameIsStarted = false;
-let blastFlag = false;
-let cellIsPicked = false;
+let flags = {gameIsStarted: false, isMoveAvailable: false, canPick: false, checkMove: false, blastFlag: false, cellIsPicked: false};
+let gameScene = {
+    init: initGame,
+    remove: removeGameListener,
+};
+let finder = new SameColorAreasFinder();
 
-resources.load([
-    'assets/Background.png',
-    'assets/field.png',
-    'assets/button.png',
-    'assets/button2.png',
-    'assets/background_progress.png',
-    'assets/progress.png',
-    'assets/scorepanel.png',
-    'assets/bonus.png',
-    'assets/money.png',
-    'assets/money2.png',
-    'assets/pause.png',
-    'assets/button_plus.png',
-    'assets/blocks.png',
-    'assets/button.png',
-    'assets/button_plus.png',
-
-]);
-resources.onReady(init);
-
-class cell {
-    constructor(pos, index){
-        this.isEmpty = true;
-        this.pos = {x: pos.x, y: pos.y};
-        this.index = {row: index.row, col: index.col};
-        this.tile = {};
-    }
-    action(){
-        if (boosters.bomb.enable){
-            poolArray = boosters.bomb.blast(this.index);
-            blastTiles(poolArray);
-        } else this.tile.action(this);
-    }
-
-    draw (){
-        if (!this.isEmpty) this.tile.draw();
-    }
-
-}
-class tile {
+class Tile {
     constructor(pos, frame, index, state){
         let spriteAttr = {
             url: 'assets/blocks.png',
@@ -121,16 +79,16 @@ class tile {
     }
 
     // update(){
-        // if (this._state === 'base'){
-        //
-        // } else
-        // if (this._state === 'destroy'){
-        //     if (this.sprite.alpha == 0) this.state = 'destroyComplete';
-        // } else if (this._state === 'destroyComplete'){
-        //     getCell(this.index.row, this.index.col).isEmpty = true;
-        // } else if (this._state === 'fall'){
-        //     if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
-        // }
+    // if (this._state === 'base'){
+    //
+    // } else
+    // if (this._state === 'destroy'){
+    //     if (this.sprite.alpha == 0) this.state = 'destroyComplete';
+    // } else if (this._state === 'destroyComplete'){
+    //     getCell(this.index.row, this.index.col).isEmpty = true;
+    // } else if (this._state === 'fall'){
+    //     if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
+    // }
     // }
 
     set state(newState){
@@ -143,7 +101,7 @@ class tile {
 
 }
 
-class superTile extends tile {
+class SuperTile extends Tile {
     constructor(pos, frame, index, state){
         super(pos, frame, index, state);
         this.type = 'super';
@@ -152,6 +110,44 @@ class superTile extends tile {
         poolArray = makeSuperArray(this.index);
         blastTiles(poolArray);
     }
+}
+
+class Cell {
+    constructor(pos, index){
+        this.isEmpty = true;
+        this.pos = {x: pos.x, y: pos.y};
+        this.index = {row: index.row, col: index.col};
+        this.tile = {};
+    }
+    action(){
+        if (boosters.bomb.enable){
+            poolArray = boosters.bomb.blast(this.index);
+            blastTiles(poolArray);
+        } else this.tile.action(this);
+    }
+
+    draw (){
+        if (!this.isEmpty) this.tile.draw();
+    }
+
+}
+
+function timeTick() {
+    let now = Date.now();
+    dt = (now - lastTime) / 1000;
+    lastTime = now;
+}
+
+function initGame() {
+    addGameListener();
+    game();
+}
+
+function game() {
+    timeTick();
+    update();
+    render();
+    requestAnimFrame(game);
 }
 
 function deleteFromArr(tile, arr) {
@@ -169,8 +165,8 @@ function checkOnSuper(cell, arr) {
 }
 
 function blastTiles(arr) {
-    canPick = false;
-    blastFlag = true;
+    flags.canPick = false;
+    flags.blastFlag = true;
     score.calc(arr);
 }
 
@@ -184,8 +180,6 @@ function markTiles(arr, state) {
     });
 }
 
-let finder = new SameColorAreasFinder();
-
 function makeSuperArray(index){
     let arr = [];
     for (let i = 0; i < gameOptions.fieldSize; i++){
@@ -194,34 +188,11 @@ function makeSuperArray(index){
     return arr;
 }
 
-function init() {
-    lastTime = Date.now();
-    main();
-}
-
-function main() {
-    setDT(timeTick());
-    update();
-    render();
-    requestAnimFrame(main);
-}
-
-function setDT (value){
-    dt = value;
-}
-
-function timeTick() {
-    let now = Date.now();
-    let result = (now - lastTime) / 1000.0;
-    lastTime = now;
-    return result;
-}
-
 function drawField(){
     for (let i = 0; i < gameOptions.fieldSize; i++){
         getRawCellData()[i] = [];
         for (let j = 0; j < gameOptions.fieldSize; j++){
-            getRawCellData()[i][j] = new cell(makePosition(i, j), {row: i, col: j});
+            getRawCellData()[i][j] = new Cell(makePosition(i, j), {row: i, col: j});
         }
     }
 }
@@ -241,15 +212,15 @@ function fillCell(cell, type = 'standard') {
 }
 
 function createStandardTile(cell){
-    return new tile({x: cell.pos.x, y: cell.pos.y}, randomColor(), {row: cell.index.row, col: cell.index.col}, 'base');
+    return new Tile({x: cell.pos.x, y: cell.pos.y}, randomColor(), {row: cell.index.row, col: cell.index.col}, 'base');
 }
 
 function createSuperTile(cell) {
-    return new superTile({x: cell.pos.x, y: cell.pos.y}, gameOptions.blockColors, {row: cell.index.row, col: cell.index.col}, 'base');
+    return new SuperTile({x: cell.pos.x, y: cell.pos.y}, gameOptions.blockColors, {row: cell.index.row, col: cell.index.col}, 'base');
 }
 
 function makePosition(i, j) {
-    return {x: gameOptions.fieldOffcetX + gameOptions.blockWidth*gameOptions.blockScale*j + gameOptions.blockWidth*gameOptions.blockScale/2, y: gameOptions.fieldOffcetY + gameOptions.blockHeight*gameOptions.blockScale*i + gameOptions.blockHeight*gameOptions.blockScale/2};
+    return {x: gameOptions.fieldOffsetX + gameOptions.blockWidth*gameOptions.blockScale*j + gameOptions.blockWidth*gameOptions.blockScale/2, y: gameOptions.fieldOffsetY + gameOptions.blockHeight*gameOptions.blockScale*i + gameOptions.blockHeight*gameOptions.blockScale/2};
 }
 
 function randomColor(){
@@ -257,9 +228,9 @@ function randomColor(){
 }
 
 function update() {
-    if (gameIsStarted){
-        if (cellIsPicked) doPickedCellActions();
-        if (checkMove) findMove();
+    if (flags.gameIsStarted){
+        if (flags.cellIsPicked) doPickedCellActions();
+        if (flags.checkMove) findMove();
         tilesStateController();
         checkWin();
     }
@@ -268,23 +239,25 @@ function update() {
 function tilesStateController() {
     if (poolArray.length > 0){
         let state = checkState();
-        if (state === 'base' && blastFlag) {
-            blastFlag = false;
+        if (state === 'base' && flags.blastFlag) {
+            flags.blastFlag = false;
             markTiles(poolArray, 'destroy');
         }
         else if (state === 'destroy') updateTiles(poolArray);
         else if (state === 'destroyComplete') {
             updateTiles(poolArray);
-            if (makeTilesFall() === 0) markTiles(poolArray, 'fallComplete');
+            if (makeTilesFall() === 0){
+                doRefill();
+                // markTiles(poolArray, 'fallComplete');
+                // console.log(poolArray);
+                // console.log(getRawCellData());
+            }
         }
         else if (state === 'fall'){
             updateTiles(poolArray);
-            console.log('state controller - fall');
         }
 
         else if (state === 'fallComplete'){
-            console.log('state controller - fall Complete');
-            console.log(_cellArray);
             markTiles(poolArray, 'base');
             doRefill();
             poolArray = [];
@@ -329,8 +302,8 @@ function checkWin() {
 
 function doRefill() {
     refillField();
-    canPick = true;
-    checkMove = true;
+    flags.canPick = true;
+    flags.checkMove = true;
 }
 
 function gameOver(message) {
@@ -339,11 +312,10 @@ function gameOver(message) {
 }
 
 function findMove() {
-    canPick = false;
-    isMoveAvailable = finder.findMove();
-    // move.length > 2 ? isMoveAvailable = true: isMoveAvailable = false;
-    canPick = true;
-    checkMove = false;
+    flags.canPick = false;
+    flags.isMoveAvailable = finder.findMove();
+    flags.canPick = true;
+    flags.checkMove = false;
 }
 
 function refillField(){
@@ -365,14 +337,14 @@ function holesInCol(col){
 }
 
 function makeTilesFall() {
-    let fallCount = 0;
+    let fall = 0;
     poolArray = [];
     for (let i = gameOptions.fieldSize - 2; i >= 0; i--){
         for (let j = 0; j < gameOptions.fieldSize; j++){
             if (!getCell(i, j).isEmpty){
                 let holes = holesBelow(i, j);
                 if (holes > 0){
-                    fallCount++;
+                    fall++;
                     getCell(i+holes, j).tile = getCell(i,j).tile;
                     getCell(i, j).isEmpty = true;
                     getCell(i+holes, j).isEmpty = false;
@@ -384,7 +356,7 @@ function makeTilesFall() {
             }
         }
     }
-    return fallCount;
+    return fall;
 }
 
 function holesBelow(row, col) {
@@ -396,23 +368,22 @@ function holesBelow(row, col) {
 }
 
 function doPickedCellActions() {
-    cellIsPicked = false;
+    flags.cellIsPicked = false;
     pickedCell.action();
     pickedCell = {};
 }
 
 function reset() {
-    // document.getElementById('game-over').style.display = 'none';
-    // document.getElementById('game-over-overlay').style.display = 'none';
     clearData();
     clearFlags();
     roundTimer.stop();
+    // removeGameListener();
 }
 
 function clearFlags() {
-    canPick = false;
-    checkMove = false;
-    gameIsStarted = false;
+    flags.canPick = false;
+    flags.checkMove = false;
+    flags.gameIsStarted = false;
 }
 
 function clearData() {
@@ -425,27 +396,23 @@ function clearData() {
 }
 
 function blockSelect(x, y) {
-    if (canPick) {
-        let check = isTileInField(coordToIndex(x, y));
-        if (check === -1) {
+    if (flags.canPick) {
+        // let check = isTileInField(coordToIndex(x, y));
+        // if (check === -1) {
+        let index = coordToIndex(x, y);
+        if (!isTileInField(index)) {
             pickedCell = 0;
         } else {
             // pickedCell = check;
-            cellIsPicked = true;
-            pickedCell = getCell(check.row, check.col);
+            flags.cellIsPicked = true;
+            pickedCell = getCell(index.row, index.col);
         }
     }
 }
 function coordToIndex(x, y) {
-    let row = Math.floor((y - gameOptions.fieldOffcetY - gameOptions.blockHeight * gameOptions.blockScale/2) / (gameOptions.blockHeight * gameOptions.blockScale));
-    let col = Math.floor((x - gameOptions.fieldOffcetX - gameOptions.blockWidth * gameOptions.blockScale/2) / (gameOptions.blockWidth * gameOptions.blockScale));
-    return {row, col}
-}
-function isTileInField(index){
-    if(index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize){
-        return -1;
-    }
-    return {row: index.row, col: index.col};
+    let row = Math.floor((y - gameOptions.fieldOffsetY - gameOptions.blockHeight * gameOptions.blockScale/2) / (gameOptions.blockHeight * gameOptions.blockScale));
+    let col = Math.floor((x - gameOptions.fieldOffsetX - gameOptions.blockWidth * gameOptions.blockScale/2) / (gameOptions.blockWidth * gameOptions.blockScale));
+    return {row: row, col: col}
 }
 
 function shuffleField(){
@@ -456,66 +423,28 @@ function shuffleField(){
     }
 }
 
-let score = {
-    value: 0,
-    x: 616,
-    y: 340,
-    size: 40,
+function addGameListener() {
+    document.addEventListener("mouseup", inputHandler,false);
+}
 
-    calc: function (arr) {
-        let tiles = arr.length;
-        let scoreAdd = 0;
-        switch (tiles){
-            case 2:
-                scoreAdd = tiles * 10;
-                break;
-            case 3:
-                scoreAdd = tiles * 10 + 10;
-                break;
-            case 4:
-                scoreAdd = tiles * 10 + 20;
-                break;
-            case 5:
-                scoreAdd = tiles * 10 + 30;
-                break;
-            case 6:
-                scoreAdd = tiles * 10 + 40;
-                break;
-            default:
-                scoreAdd = tiles * 10 + 50;
-                break;
-        }
-        this.value += scoreAdd;
-    },
-    draw: function () {
-        drawText(this.value.toString(), this.x, this.y, this.size);
-    }
-};
+function removeGameListener() {
+    document.removeEventListener("mouseup", inputHandler);
+}
 
-let roundTimer = {
-    x: 617,
-    y: 237,
-    size: 54,
-    time: 0,
-    timerId: 0,
-    interval: 1000,
-    start: function(time){
-        this.time = time;
-        this.timerId = setInterval(this.handler, roundTimer.interval);
-    },
-    handler: function () {
-        if (roundTimer.time > 0){
-            roundTimer.time--;
-        } else {
-            gameOver(`Время вышло! Вы проиграли! Ваш счет: ${score.value}`);
-        }
-
-    },
-    draw: function () {
-        drawText(this.time.toString(), this.x, this.y, this.size);
-    },
-    stop: function () {
-        clearInterval(this.timerId);
-        this.time = 0;
-    }
+export {
+    gameScene,
+    gameOptions,
+    flags,
+    dt,
+    poolArray,
+    finder,
+    shuffleField,
+    drawField,
+    startingFillCells,
+    blockSelect,
+    blastTiles,
+    checkOnSuper,
+    deleteFromArr,
+    makeSuperArray,
+    gameOver,
 };

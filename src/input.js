@@ -1,7 +1,6 @@
+import {btnShuffle, btnAddMoney, btnStart, btnAddMoney2, boosters } from "./buttons";
+import {blockSelect} from "./game";
 
-(function() {
-    document.addEventListener("mouseup", inputHandler,false);
-})();
 
 function inputHandler(e){
     blockSelect(e.offsetX, e.offsetY);
@@ -18,3 +17,5 @@ function checkCollision(x, y, obj){
     return x >= obj.x && x <= obj.x + obj.w*obj.scale &&
         y >= obj.y && y <= obj.y + obj.h*obj.scale;
 }
+
+export {checkCollision, inputHandler};

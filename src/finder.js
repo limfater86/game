@@ -1,3 +1,9 @@
+import {
+    getTile
+} from "./data";
+
+import {gameOptions} from "./game";
+
 function SameColorAreasFinder () {
     let matchedBlocks = [];
     let scannedBlocks = [];
@@ -55,11 +61,13 @@ function SameColorAreasFinder () {
         }
     }
     function tileScan (scanTile){
+        let row = 0, col = 0;
         for (let i = -1; i < 2; i++){
             for (let j = -1; j < 2; j++){
                 if ( Math.abs(i) != Math.abs(j) ){
-                    let row = scanTile.row + i, col = scanTile.col + j;
-                    if (isTileInField({row: row, col: col}) !== -1) {
+                    row = scanTile.row + i;
+                    col = scanTile.col + j;
+                    if (isTileInField({row: row, col: col})) {
                         nearbyBlockCheck(getTile(row, col), getTile(scanTile.row, scanTile.col));
                     }
                 }
@@ -79,3 +87,14 @@ function SameColorAreasFinder () {
         }
     }
 }
+
+function isTileInField(index){
+    // if (index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize){
+    //     return -1;
+    // }
+    // return {row: index.row, col: index.col};
+    return !(index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize);
+
+}
+
+export {isTileInField, SameColorAreasFinder}

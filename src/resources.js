@@ -1,8 +1,8 @@
 
 (function() {
-    var resourceCache = {};
-    var loading = [];
-    var readyCallbacks = [];
+    let resourceCache = {};
+    let loading = [];
+    let readyCallbacks = [];
 
     // Load an image url or an array of image urls
     function load(urlOrArr) {
@@ -21,7 +21,7 @@
             return resourceCache[url];
         }
         else {
-            var img = new Image();
+            let img = new Image();
             img.onload = function() {
                 resourceCache[url] = img;
                 
@@ -39,8 +39,8 @@
     }
 
     function isReady() {
-        var ready = true;
-        for(var k in resourceCache) {
+        let ready = true;
+        for(let k in resourceCache) {
             if(resourceCache.hasOwnProperty(k) &&
                !resourceCache[k]) {
                 ready = false;
