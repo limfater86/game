@@ -9,7 +9,7 @@ module.exports = {
     entry: {
         // game: './src/game.js',
         // welcome: './src/welcome.js',
-        main: ['./main.js', './src/welcome.js', './src/game.js',]
+        main: ['./main.js', './src/welcome.js', './src/gameOver.js', './src/game.js', ]
     },
     output: {
         filename: '[name].[contenthash].js',

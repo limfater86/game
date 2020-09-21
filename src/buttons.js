@@ -1,4 +1,5 @@
-import {gameOptions, drawField, flags, shuffleField, startingFillCells, gameOver} from "./game";
+import {gameOptions, drawField, flags, shuffleField, startingFillCells, gameScene} from "./game";
+import {gameOverScene} from "./gameOver";
 import {drawText} from "./render";
 import {ctx} from "./frame";
 import {getRawCellData, getTile} from "./data";
@@ -44,7 +45,8 @@ let btnShuffle = {
             this.count++;
         }
         if (this.count > gameOptions.shuffleNum){
-            gameOver('Нет доступных ходов! Вы проиграли!');
+            gameScene.remove();
+            gameOverScene.init('Нет доступных ходов! Вы проиграли!');
         }
 
     }

@@ -12,6 +12,7 @@ import {
 } from './frame';
 import {inputHandler} from "./input";
 import {score, roundTimer} from "./interface";
+import {gameOverScene} from "./gameOver";
 
 let gameOptions = {
     fieldSize: 7,
@@ -27,7 +28,7 @@ let gameOptions = {
     shuffleNum: 3,
     boosterBombCount: 5,
     boosterShuffleCount: 5,
-    roundTime: 600,
+    roundTime: 60,
     roundScore: 2000
 };
 
@@ -38,7 +39,7 @@ let pickedCell;
 let flags = {gameIsStarted: false, isMoveAvailable: false, canPick: false, checkMove: false, blastFlag: false, cellIsPicked: false};
 let gameScene = {
     init: initGame,
-    remove: removeGameListener,
+    remove: reset,
 };
 let finder = new SameColorAreasFinder();
 
@@ -147,7 +148,7 @@ function game() {
     timeTick();
     update();
     render();
-    requestAnimFrame(game);
+    if (!checkWin())requestAnimFrame(game);
 }
 
 function deleteFromArr(tile, arr) {
@@ -232,7 +233,6 @@ function update() {
         if (flags.cellIsPicked) doPickedCellActions();
         if (flags.checkMove) findMove();
         tilesStateController();
-        checkWin();
     }
 }
 
@@ -296,7 +296,10 @@ function checkState() {
 
 function checkWin() {
     if(score.value >= gameOptions.roundScore){
-        gameOver(`Поздравляем! Вы выиграли! Ваш счет: ${score.value}`);
+        let scr = score.value;
+        gameScene.remove();
+        gameOverScene.init(`Поздравляем! Вы выиграли! Ваш счет: ${scr}`);
+        return true;
     }
 }
 
@@ -306,10 +309,10 @@ function doRefill() {
     flags.checkMove = true;
 }
 
-function gameOver(message) {
-    reset();
-    alert(message);
-}
+// function gameOver(message) {
+//     reset();
+//     alert(message);
+// }
 
 function findMove() {
     flags.canPick = false;
@@ -377,7 +380,7 @@ function reset() {
     clearData();
     clearFlags();
     roundTimer.stop();
-    // removeGameListener();
+    removeGameListener();
 }
 
 function clearFlags() {
@@ -446,5 +449,4 @@ export {
     checkOnSuper,
     deleteFromArr,
     makeSuperArray,
-    gameOver,
 };

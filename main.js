@@ -2,6 +2,7 @@ import './css/app.css'
 import './src/resources'
 
 import {welcomeScene} from "./src/welcome";
+import {gameOverScene} from "./src/gameOver";
 
 
 resources.load([
@@ -25,6 +26,7 @@ resources.load([
 resources.onReady(init);
 
 function init() {
+    // gameOverScene.init(`Поздравляем! Вы выиграли! Ваш счет:`);
     welcomeScene.init();
 }
 

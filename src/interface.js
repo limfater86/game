@@ -1,6 +1,7 @@
-import {gameOptions, dt, gameOver} from "./game";
+import {gameOptions, gameScene} from "./game";
 import {drawText} from "./render";
 import {ctx} from "./frame";
+import {gameOverScene} from "./gameOver";
 
 let score = {
     value: 0,
@@ -53,7 +54,9 @@ let roundTimer = {
         if (roundTimer.time > 0){
             roundTimer.time--;
         } else {
-            gameOver(`Время вышло! Вы проиграли! Ваш счет: ${score.value}`);
+            let scr = score.value;
+            gameScene.remove();
+            gameOverScene.init(`Время вышло! Вы проиграли! Ваш счет: ${scr}`);
         }
 
     },
