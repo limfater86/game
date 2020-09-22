@@ -20,7 +20,7 @@ let btnStart = {
             console.log('pressed Start Button');
             flags.canPick = true;
             drawField();
-            startingFillCells();
+            // startingFillCells();
             roundTimer.start(gameOptions.roundTime);
             boosters.bomb.count = gameOptions.boosterBombCount;
             boosters.shuffle.count = gameOptions.boosterShuffleCount;
@@ -105,6 +105,7 @@ boosters.bomb = {
         if (this.count > 0){
             this.enable ? this.enable = false : this.enable = true;
             console.log(`Нажата кнопка boosterBomb boosterActive = ${this.enable}`);
+            console.log(getRawCellData());
         }
     },
     blast: function (index){
