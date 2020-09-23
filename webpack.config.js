@@ -5,10 +5,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     mode: 'development',
-    // entry: ['./src/welcome.js', './src/game.js',  './main.js',],
     entry: {
-        // game: './src/game.js',
-        // welcome: './src/welcome.js',
         main: ['./main.js', './src/welcome.js', './src/gameOver.js', './src/game.js', ]
     },
     output: {
@@ -32,6 +29,16 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: ['style-loader', 'css-loader']
+            },
+            {
+                test: /\.m?js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+                }
             }
         ]
     },

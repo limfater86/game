@@ -15,15 +15,7 @@ canvas.width = 800;
 canvas.height = 600;
 document.body.appendChild(canvas);
 
-// function timeTick(lastTime) {
-//     let now = Date.now();
-//     return (now - lastTime);
-// }
-
 export {
     requestAnimFrame,
-    // timeTick,
     ctx,
-    // dt,
-    // currentFPS
 }

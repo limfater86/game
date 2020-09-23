@@ -4,9 +4,7 @@ import './resources'
 import {render} from "./render";
 import {getCell, getTile, getRawCellData, getSprite} from "./data";
 import {isTileInField, SameColorAreasFinder} from "./finder";
-import {
-    requestAnimFrame,
-} from './frame';
+import {requestAnimFrame,} from './frame';
 import {inputHandler} from "./input";
 import {score, roundTimer} from "./interface";
 import {gameOverScene} from "./gameOver";
@@ -67,7 +65,7 @@ function checkOnSuper(cell, arr) {
 
 function blastTiles(arr) {
     flags.fallComplete = false;
-    flags.isMoveAvailable ? checkMoveCorrupt(arr) : flags.checkMove = true;
+    flags.isMoveAvailable ? flags.checkMove = checkMoveCorrupt(arr) : flags.checkMove = true;
     markTiles(arr, 'destroy');
     score.calc(arr);
 }
@@ -98,14 +96,6 @@ function drawField(){
         }
     }
 }
-
-// function startingFillCells() {
-//     for (let i = 0; i < getRawCellData().length; i++){
-//         for (let j = 0; j < getRawCellData()[i].length; j++){
-//             fillCell(getCell(i, j));
-//         }
-//     }
-// }
 
 function fillCell(cell, type = 'standard') {
     if (type === 'standard') cell.tile = createStandardTile(cell);
@@ -177,12 +167,13 @@ function checkMoveCorrupt(arr) {
             for (let i = 0; i < move.length; i++){
                 if (move[i].index.col == item.index.col){
                     if (item.index.row > move[i].index.row ) {
-                        flags.checkMove = true;
+                        return true;
                     }
                 }
             }
         });
     }
+    return false;
 }
 
 function compareCols(a, b) {

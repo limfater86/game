@@ -27,7 +27,7 @@ class Tile {
     }
 
     draw (){
-        if ((this._state === 'base') || (this._state === 'fallComplete')){
+        if (this._state === 'fallComplete'){
             this.sprite.render();
         } else if ((this._state === 'destroy') || (this._state === 'destroyComplete')){
             this.sprite.renderDestroy();

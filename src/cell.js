@@ -24,7 +24,7 @@ export default class Cell {
     update (){
         if (this.isEmpty){
             if (isTileInField({row: this.index.row-1, col: this.index.col})){
-                if ((!getCell(this.index.row-1, this.index.col).isEmpty) && (getTile(this.index.row-1, this.index.col).state === 'fallComplete' || getTile(this.index.row-1, this.index.col).state === 'base' || getTile(this.index.row-1, this.index.col).state === 'destroyComplete')){
+                if ((!getCell(this.index.row-1, this.index.col).isEmpty) && (getTile(this.index.row-1, this.index.col).state === 'fallComplete' || getTile(this.index.row-1, this.index.col).state === 'destroyComplete')){
                     this.makeTileFall();
                 }
             } else {

@@ -1,6 +1,5 @@
 import {
     getTile,
-    getRawCellData,
 } from "./data";
 
 import {gameOptions} from "./game";
@@ -89,12 +88,7 @@ function SameColorAreasFinder () {
 }
 
 function isTileInField(index){
-    // if (index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize){
-    //     return -1;
-    // }
-    // return {row: index.row, col: index.col};
     return !(index.row < 0 || index.row >= gameOptions.fieldSize || index.col < 0 || index.col >= gameOptions.fieldSize);
-
 }
 
 export {isTileInField, SameColorAreasFinder}
