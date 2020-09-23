@@ -1,8 +1,8 @@
-import {gameOptions, drawField, flags, shuffleField, startingFillCells, gameScene} from "./game";
+import {gameOptions, drawField, flags, shuffleField, gameScene} from "./game";
 import {gameOverScene} from "./gameOver";
 import {drawText} from "./render";
 import {ctx} from "./frame";
-import {getRawCellData, getTile} from "./data";
+import {getTile} from "./data";
 import {isTileInField} from "./finder";
 import {roundTimer} from "./interface";
 
@@ -18,13 +18,10 @@ let btnStart = {
         if (!flags.gameIsStarted){
             flags.gameIsStarted = true;
             console.log('pressed Start Button');
-            flags.canPick = true;
             drawField();
-            // startingFillCells();
             roundTimer.start(gameOptions.roundTime);
             boosters.bomb.count = gameOptions.boosterBombCount;
             boosters.shuffle.count = gameOptions.boosterShuffleCount;
-            flags.checkMove = true;
         }
 
     }
@@ -42,6 +39,8 @@ let btnShuffle = {
     click: function () {
         if (!flags.isMoveAvailable){
             shuffleField();
+            flags.isMoveAvailable = false;
+            flags.checkMove = true;
             this.count++;
         }
         if (this.count > gameOptions.shuffleNum){
@@ -105,7 +104,6 @@ boosters.bomb = {
         if (this.count > 0){
             this.enable ? this.enable = false : this.enable = true;
             console.log(`Нажата кнопка boosterBomb boosterActive = ${this.enable}`);
-            console.log(getRawCellData());
         }
     },
     blast: function (index){
@@ -144,6 +142,8 @@ boosters.shuffle = {
     click: function () {
         if (this.count > 0){
             shuffleField();
+            flags.isMoveAvailable = false;
+            flags.checkMove = true;
             this.count--;
         }
     }

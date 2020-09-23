@@ -32,9 +32,8 @@ let gameOptions = {
 };
 
 let dt = 0, lastTime = 0;
-let move = [];
-let pickedCell;
-let flags = {gameIsStarted: false, isMoveAvailable: false, canPick: false, checkMove: false, blastFlag: false, cellIsPicked: false};
+let move = 0;
+let flags = {gameIsStarted: false, isMoveAvailable: false, checkMove: false, blastFlag: false, fallComplete: false, };
 let gameScene = {
     init: initGame,
     remove: reset,
@@ -67,8 +66,8 @@ function checkOnSuper(cell, arr) {
 }
 
 function blastTiles(arr) {
-    // flags.canPick = false;
-    // flags.blastFlag = true;
+    flags.fallComplete = false;
+    flags.isMoveAvailable ? checkMoveCorrupt(arr) : flags.checkMove = true;
     markTiles(arr, 'destroy');
     score.calc(arr);
 }
@@ -100,13 +99,13 @@ function drawField(){
     }
 }
 
-function startingFillCells() {
-    for (let i = 0; i < getRawCellData().length; i++){
-        for (let j = 0; j < getRawCellData()[i].length; j++){
-            fillCell(getCell(i, j));
-        }
-    }
-}
+// function startingFillCells() {
+//     for (let i = 0; i < getRawCellData().length; i++){
+//         for (let j = 0; j < getRawCellData()[i].length; j++){
+//             fillCell(getCell(i, j));
+//         }
+//     }
+// }
 
 function fillCell(cell, type = 'standard') {
     if (type === 'standard') cell.tile = createStandardTile(cell);
@@ -132,19 +131,21 @@ function randomColor(){
 
 function update() {
     if (flags.gameIsStarted){
-        if (flags.cellIsPicked) doPickedCellActions();
-        // if (flags.checkMove) findMove();
+        if (flags.checkMove && flags.fallComplete) findMove();
+        else if ( move === 0 && flags.fallComplete ) flags.checkMove = true;
         updateCells();
-        // tilesStateController();
     }
 }
 
 function updateCells() {
+    let count = 0;
     for (let i = getRawCellData().length - 1; i >= 0; i--) {
         for (let j = getRawCellData()[i].length - 1; j >= 0; j--) {
+            if(getTile(i, j).state === 'fallComplete') count++;
             getCell(i, j).update();
         }
     }
+    if (count == gameOptions.fieldSize*gameOptions.fieldSize) flags.fallComplete = true;
 }
 
 function checkWin() {
@@ -154,26 +155,40 @@ function checkWin() {
         gameOverScene.init(`Поздравляем! Вы выиграли! Ваш счет: ${scr}`);
         return true;
     }
+    return false;
 }
 
-// function doRefill() {
-//     refillField();
-//     flags.canPick = true;
-//     flags.checkMove = true;
-// }
-
-
 function findMove() {
-    flags.canPick = false;
-    flags.isMoveAvailable = finder.findMove();
-    flags.canPick = true;
+    move = finder.findMove();
+    if (move !== -1){
+        flags.isMoveAvailable = true;
+        move.sort(compareCols);
+    }
     flags.checkMove = false;
 }
 
-function doPickedCellActions() {
-    flags.cellIsPicked = false;
-    pickedCell.action();
-    pickedCell = {};
+function checkMoveCorrupt(arr) {
+    let minCol, maxCol;
+    minCol = move[0].index.col;
+    maxCol = move[move.length-1].index.col;
+    let result = arr.filter(item => item.index.col >= minCol && item.index.col <= maxCol);
+    if (result.length > 0){
+        result.forEach((item) => {
+            for (let i = 0; i < move.length; i++){
+                if (move[i].index.col == item.index.col){
+                    if (item.index.row > move[i].index.row ) {
+                        flags.checkMove = true;
+                    }
+                }
+            }
+        });
+    }
+}
+
+function compareCols(a, b) {
+    if (a.index.col > b.index.col) return 1;
+    if (a.index.col == b.index.col) return 0;
+    if (a.index.col < b.index.col) return -1;
 }
 
 function reset() {
@@ -184,9 +199,10 @@ function reset() {
 }
 
 function clearFlags() {
-    flags.canPick = false;
     flags.checkMove = false;
     flags.gameIsStarted = false;
+    flags.fallComplete = false;
+    flags.isMoveAvailable = false;
 }
 
 function clearData() {
@@ -194,22 +210,15 @@ function clearData() {
     boosters.shuffle.count = 0;
     btnShuffle.count = 0;
     boosters.bomb.count = 0;
+    move = 0;
     let c =  getRawCellData();
     c = [];
 }
 
 function blockSelect(x, y) {
-    if (flags.canPick) {
-        // let check = isTileInField(coordToIndex(x, y));
-        // if (check === -1) {
-        let index = coordToIndex(x, y);
-        if (!isTileInField(index)) {
-            pickedCell = 0;
-        } else {
-            // pickedCell = check;
-            flags.cellIsPicked = true;
-            pickedCell = getCell(index.row, index.col);
-        }
+    let index = coordToIndex(x, y);
+    if (isTileInField(index)){
+        getCell(index.row, index.col).action();
     }
 }
 function coordToIndex(x, y) {
@@ -242,7 +251,6 @@ export {
     finder,
     shuffleField,
     drawField,
-    startingFillCells,
     blockSelect,
     blastTiles,
     checkOnSuper,

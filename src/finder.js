@@ -1,5 +1,6 @@
 import {
-    getTile
+    getTile,
+    getRawCellData,
 } from "./data";
 
 import {gameOptions} from "./game";
@@ -16,15 +17,14 @@ function SameColorAreasFinder () {
 
     this.findMove = function () {
         let fullScan = createScanOrder();
-
         while (fullScan.length > 0){
             init(fullScan[0]);
             doScan();
-            if (matchedBlocks.length > gameOptions.minAreaSize) return true;
+            if (matchedBlocks.length > gameOptions.minAreaSize) return matchedBlocks;
             deleteFromScan();
             fullScan.shift();
         }
-        return false;
+        return -1;
     };
 
     function createScanOrder() {

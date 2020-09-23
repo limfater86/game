@@ -1,5 +1,4 @@
 import {
-    // timeTick,
     requestAnimFrame,
     ctx,
 } from './frame';

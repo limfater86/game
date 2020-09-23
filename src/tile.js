@@ -20,7 +20,7 @@ class Tile {
 
     action(cell){
         let arr = finder.scan(this.index);
-        if (arr.length >= gameOptions.minAreaSize) {
+        if (arr.length > gameOptions.minAreaSize) {
             blastTiles(arr);
             checkOnSuper(cell, arr);
         }
@@ -38,19 +38,6 @@ class Tile {
         }
 
     }
-
-    // update(){
-    // if (this._state === 'base'){
-    //
-    // } else
-    // if (this._state === 'destroy'){
-    //     if (this.sprite.alpha == 0) this.state = 'destroyComplete';
-    // } else if (this._state === 'destroyComplete'){
-    //     getCell(this.index.row, this.index.col).isEmpty = true;
-    // } else if (this._state === 'fall'){
-    //     if (this.sprite.pos.y == this.pos.y) this.state = 'fallComplete';
-    // }
-    // }
 
     set state(newState){
         this._state = newState;

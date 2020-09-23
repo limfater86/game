@@ -26,7 +26,6 @@ resources.load([
 resources.onReady(init);
 
 function init() {
-    // gameOverScene.init(`Поздравляем! Вы выиграли! Ваш счет:`);
     welcomeScene.init();
 }
 
