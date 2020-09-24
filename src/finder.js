@@ -19,7 +19,7 @@ function SameColorAreasFinder () {
         while (fullScan.length > 0){
             init(fullScan[0]);
             doScan();
-            if (matchedBlocks.length > gameOptions.minAreaSize) return matchedBlocks;
+            if (matchedBlocks.length >= gameOptions.minAreaSize) return matchedBlocks;
             deleteFromScan();
             fullScan.shift();
         }

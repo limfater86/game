@@ -39,5 +39,10 @@ function drawText(text, x, y, size) {
     ctx.fillText(text, x, y);
 }
 
-export {drawText, render}
+function drawButton(prop) {
+    ctx.drawImage(resources.get( prop.pic,), 0, 0, prop.w, prop.h, prop.x, prop.y, prop.w*prop.scale, prop.h*prop.scale);
+    drawText(prop.text,prop.x+prop.textOfsetX, prop.y+prop.textOfsetY, prop.textSize);
+}
+
+export {drawText, render, drawButton}
 

@@ -5,13 +5,12 @@ import {
 
 import {checkCollision} from './input';
 import {gameScene} from "./game";
-import {drawText} from './render';
+import {drawText, drawButton} from './render';
 import './resources';
 
 let background = {
     x: 0, y: 0,
     w: 640, h: 359,
-    scale: 1.25,
     pic: 'assets/Background.png',
 
     draw: function () {
@@ -20,13 +19,15 @@ let background = {
 };
 
 let beginButton = {
-    x: 300, y: 300,
+    prop: {x: 300, y: 300,
     w: 496, h: 157,
     scale: 0.4,
-    draw: function(){
-        ctx.drawImage(resources.get( 'assets/button2.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
-        drawText('Войти в Игру',this.x+100, this.y+40, 18);
-    },
+    pic: 'assets/button2.png',
+    text: 'Войти в Игру',
+    textOfsetX: 100,
+    textOfsetY: 40,
+    textSize: 18,},
+    draw: function(){drawButton(this.prop)},
     click: function () {
         welcomeScene.remove();
         gameScene.init();

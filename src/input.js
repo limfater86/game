@@ -14,8 +14,8 @@ function inputHandler(e){
 }
 
 function checkCollision(x, y, obj){
-    return x >= obj.x && x <= obj.x + obj.w*obj.scale &&
-        y >= obj.y && y <= obj.y + obj.h*obj.scale;
+    return x >= obj.prop.x && x <= obj.prop.x + obj.prop.w*obj.prop.scale &&
+        y >= obj.prop.y && y <= obj.prop.y + obj.prop.h*obj.prop.scale;
 }
 
 export {checkCollision, inputHandler};

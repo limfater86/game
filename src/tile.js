@@ -20,7 +20,7 @@ class Tile {
 
     action(cell){
         let arr = finder.scan(this.index);
-        if (arr.length > gameOptions.minAreaSize) {
+        if (arr.length >= gameOptions.minAreaSize) {
             blastTiles(arr);
             checkOnSuper(cell, arr);
         }

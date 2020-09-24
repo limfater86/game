@@ -53,7 +53,7 @@ function game() {
     timeTick();
     update();
     render();
-    if (!checkWin())requestAnimFrame(game);
+    if (!checkWin()) requestAnimFrame(game);
 }
 
 function checkOnSuper(cell, arr) {
@@ -166,7 +166,7 @@ function checkMoveCorrupt(arr) {
         result.forEach((item) => {
             for (let i = 0; i < move.length; i++){
                 if (move[i].index.col == item.index.col){
-                    if (item.index.row > move[i].index.row ) {
+                    if (item.index.row >= move[i].index.row ) {
                         return true;
                     }
                 }

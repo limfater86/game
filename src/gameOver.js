@@ -4,7 +4,7 @@ import {
 } from './frame';
 
 import {checkCollision} from './input';
-import {drawText} from './render';
+import {drawText, drawButton} from './render';
 import './resources';
 import {gameScene} from "./game";
 import {welcomeScene} from "./welcome";
@@ -23,13 +23,15 @@ let background = {
 };
 
 let againButton = {
-    x: 200, y: 300,
-    w: 496, h: 157,
-    scale: 0.4,
-    draw: function(){
-        ctx.drawImage(resources.get( 'assets/button2.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
-        drawText('Начать заново',this.x+100, this.y+40, 16);
-    },
+    prop: {x: 200, y: 300,
+        w: 496, h: 157,
+        scale: 0.4,
+        pic: 'assets/button2.png',
+        text: 'Начать заново',
+        textOfsetX: 100,
+        textOfsetY: 40,
+        textSize: 16,},
+    draw: function(){ drawButton(this.prop)},
     click: function () {
         gameOverScene.remove();
         gameScene.init();
@@ -37,13 +39,15 @@ let againButton = {
 };
 
 let exitButton = {
-    x: 400, y: 300,
+    prop: {x: 400, y: 300,
     w: 496, h: 157,
     scale: 0.4,
-    draw: function(){
-        ctx.drawImage(resources.get( 'assets/button.png',), 0, 0, this.w, this.h, this.x, this.y, this.w*this.scale, this.h*this.scale);
-        drawText('Выйти',this.x+70, this.y+40, 18);
-    },
+    pic: 'assets/button.png',
+    text: 'Выйти',
+    textOfsetX: 70,
+    textOfsetY: 40,
+    textSize: 18,},
+    draw: function(){drawButton(this.prop)},
     click: function () {
         gameOverScene.remove();
         welcomeScene.init();
